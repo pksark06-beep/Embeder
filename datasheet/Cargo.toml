@@ -17,3 +17,9 @@ path = "src/lib.rs"
 [[bin]]
 name = "datasheet-demo"
 path = "src/main.rs"
+
+# Grounded loop: P2 -> P1. Synthesizes firmware whose register addresses come
+# straight from the SVD, then drives the verification loop over it.
+[[bin]]
+name = "grounded-loop"
+path = "src/grounded_loop.rs"

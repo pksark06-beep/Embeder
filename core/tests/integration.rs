@@ -5,22 +5,22 @@ use embeder_core::*;
 struct AlwaysOk;
 impl Codegen for AlwaysOk {
     fn generate(&mut self, _ctx: &LoopContext) -> FirmwareDraft {
-        FirmwareDraft {
-            target: "stm32f4-discovery".to_string(),
-            entry: "main.c".to_string(),
-            files: vec![("main.c".to_string(), "int main(){return 0;}".to_string())],
-        }
+        FirmwareDraft::new(
+            "stm32f4-discovery",
+            "main.c",
+            vec![("main.c".to_string(), "int main(){return 0;}".to_string())],
+        )
     }
 }
 
 struct AlwaysBug;
 impl Codegen for AlwaysBug {
     fn generate(&mut self, _ctx: &LoopContext) -> FirmwareDraft {
-        FirmwareDraft {
-            target: "stm32f4-discovery".to_string(),
-            entry: "main.c".to_string(),
-            files: vec![("main.c".to_string(), format!("int main(){{ {} return 0; }}", BUG_MARKER))],
-        }
+        FirmwareDraft::new(
+            "stm32f4-discovery",
+            "main.c",
+            vec![("main.c".to_string(), format!("int main(){{ {} return 0; }}", BUG_MARKER))],
+        )
     }
 }
 
@@ -32,11 +32,7 @@ impl Codegen for BugThenHeal {
         } else {
             "int main(){return 0;}".to_string()
         };
-        FirmwareDraft {
-            target: "stm32f4-discovery".to_string(),
-            entry: "main.c".to_string(),
-            files: vec![("main.c".to_string(), src)],
-        }
+        FirmwareDraft::new("stm32f4-discovery", "main.c", vec![("main.c".to_string(), src)])
     }
 }
 

@@ -30,15 +30,23 @@ servers/               Python MCP tool servers (ADR-0001) — future
   and its USART2 banner is captured in-simulation — `intent → REAL compile →
   self-heal → REAL Renode sim → VERIFIED`.
 
-## Status: Phase 2 (datasheet grounding) — registers DONE
+## Status: Phase 2 (datasheet grounding) — registers DONE + loop grounded
 
 - **P2 registers: DONE.** CMSIS-SVD-grounded register maps with absolute addresses,
   source citations, and confidence tiers; **refuses rather than fabricates** on a miss
-  (ADR-0002). Addresses cross-checked against the P1 firmware. See
-  [`docs/P2-datasheet-grounding.md`](docs/P2-datasheet-grounding.md). Pinmux: next.
+  (ADR-0002). Addresses cross-checked against the P1 firmware.
+- **Grounding the loop (P2→P1): DONE.** `GroundedCodegen` synthesizes firmware whose
+  register addresses come *straight from the SVD* (each cited); that firmware then goes
+  through the real compile+Renode loop to VERIFIED — `grounded-loop --real`.
+  See [`docs/P2-datasheet-grounding.md`](docs/P2-datasheet-grounding.md). Pinmux: next.
 
-Verified on this machine: **16/16 tests** (13 default + 3 ignored real-toolchain),
+Verified on this machine: **18/18 tests** (15 default + 3 ignored real-toolchain),
 rustc 1.98.1 (x86_64-pc-windows-gnu), Arm GNU Toolchain 12.2.1, Renode 1.16.0.
+
+```powershell
+# The full picture: datasheet -> grounded synthesis -> real compile -> real sim -> VERIFIED
+cargo run -p embeder-datasheet --bin grounded-loop -- --real
+```
 
 ### Build & run
 

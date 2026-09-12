@@ -29,11 +29,7 @@ impl Codegen for ScriptedCodegen {
         } else {
             BLINK_UART_OK.to_string()
         };
-        FirmwareDraft {
-            target: "stm32f4-discovery".to_string(),
-            entry: "main.c".to_string(),
-            files: vec![("main.c".to_string(), src)],
-        }
+        FirmwareDraft::new("stm32f4-discovery", "main.c", vec![("main.c".to_string(), src)])
     }
 }
 
@@ -56,11 +52,7 @@ impl Codegen for RealCodegen {
         } else {
             self.good.clone()
         };
-        FirmwareDraft {
-            target: "stm32f4-discovery".to_string(),
-            entry: "main.c".to_string(),
-            files: vec![("main.c".to_string(), src)],
-        }
+        FirmwareDraft::new("stm32f4-discovery", "main.c", vec![("main.c".to_string(), src)])
     }
 }
 
@@ -85,6 +77,12 @@ fn print_outcome(title: &str, outcome: &LoopOutcome) {
     }
     for (k, v) in &outcome.observations {
         println!("observed   : {} = {}", k, v);
+    }
+    if !outcome.citations.is_empty() {
+        println!("grounded on: {} cited facts", outcome.citations.len());
+        for c in &outcome.citations {
+            println!("   - {}", c.as_line());
+        }
     }
     println!(
         "provenance : {} entries",

@@ -54,11 +54,25 @@ cargo test -p embeder-datasheet
 cargo run  -p embeder-datasheet --bin datasheet-demo -- USART2
 ```
 
-## 6. Next
+## 6. Grounding the loop (P2 → P1) — DONE
+`GroundedCodegen` (in the datasheet crate) synthesizes firmware whose register
+addresses and bit positions are taken **directly from the SVD** via grounded lookups,
+attaching a `SourceRef` citation for each fact. Those citations ride on the
+`FirmwareDraft`, the loop writes a dedicated `ground` provenance record, and the
+VERIFIED `LoopOutcome` carries them. Core stays dependency-free (`SourceRef` is plain
+strings); the grounding lives in the datasheet crate.
+
+Proof — `grounded-loop --real`:
+```
+grounded on 9 cited facts (…USART2/registers/CR1 @ 0x4000440c, …)
+ → REAL arm-none-eabi-gcc compile → REAL Renode sim (100 UART bytes) → VERIFIED
+```
+The address in the firmware (`0x4000440c`) is literally the one the datasheet
+returned. Run: `cargo run -p embeder-datasheet --bin grounded-loop [-- --real]`.
+
+## 7. Next
 - **Pinmux grounding:** pin/alternate-function tables (ESP32 strapping/input-only
   rules, STM32 AF maps, RP2040 PIO caveats) — same Grounded/citation/refuse contract.
-- **Loop integration:** feed grounded register facts into codegen context so firmware
-  synthesis cites its sources (ties P2 into the P1 loop).
 - **MCP-ification (ADR-0001):** expose this behind the Python Datasheet MCP server;
   the crate is the reference implementation the server mirrors.
 - **RAG (prose only):** optional, clearly tiered Advisory, never a source for addresses.

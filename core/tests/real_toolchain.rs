@@ -19,11 +19,7 @@ fn read_main() -> String {
 }
 
 fn draft(src: String) -> FirmwareDraft {
-    FirmwareDraft {
-        target: "stm32f4-discovery".into(),
-        entry: "main.c".into(),
-        files: vec![("main.c".into(), src)],
-    }
+    FirmwareDraft::new("stm32f4-discovery", "main.c", vec![("main.c".into(), src)])
 }
 
 #[test]

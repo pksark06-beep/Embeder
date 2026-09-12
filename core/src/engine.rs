@@ -6,7 +6,9 @@
 //! failure rather than guessing.
 
 use crate::json;
-use crate::oracle::{CompileOracle, CompileResult, Diagnostic, FirmwareDraft, SimOracle, SimResult};
+use crate::oracle::{
+    CompileOracle, CompileResult, Diagnostic, FirmwareDraft, SimOracle, SimResult, SourceRef,
+};
 use crate::provenance::ProvenanceLedger;
 use crate::tiers::{Tier, VerifiabilityBoundary};
 
@@ -53,6 +55,7 @@ pub struct LoopOutcome {
     pub provenance_ids: Vec<String>,
     pub artifact_path: Option<String>,
     pub observations: Vec<(String, String)>,
+    pub citations: Vec<SourceRef>,
 }
 
 /// A firmware is VERIFIED only when a deterministic oracle proved modeled behavior:
@@ -90,6 +93,21 @@ pub fn run_loop(
         ctx.attempt = attempt;
         let draft = codegen.generate(&ctx);
 
+        // --- ground: record the authoritative facts this draft was built on ---
+        if !draft.citations.is_empty() {
+            let cites: Vec<String> = draft.citations.iter().map(|c| c.as_line()).collect();
+            let gid = ledger.record(
+                "model",
+                "ground",
+                &format!("{{\"goal\":{},\"attempt\":{}}}", json::quote(goal), attempt),
+                &format!("{{\"citations\":{}}}", json::str_array(&cites)),
+                None,
+                "datasheet",
+                "{}",
+            );
+            prov_ids.push(gid);
+        }
+
         // --- compile ---
         let cres = compile_oracle.compile(&draft);
         let files_list: Vec<String> = draft.files.iter().map(|(p, _)| p.clone()).collect();
@@ -123,6 +141,7 @@ pub fn run_loop(
                     provenance_ids: prov_ids,
                     artifact_path: None,
                     observations: Vec::new(),
+                    citations: draft.citations.clone(),
                 };
             }
             continue; // self-heal: regenerate with the diagnostics in context
@@ -169,6 +188,7 @@ pub fn run_loop(
                 provenance_ids: prov_ids,
                 artifact_path: cres.artifact_path.clone(),
                 observations: sres.observations.clone(),
+                citations: draft.citations.clone(),
             };
         } else {
             ctx.sim_fault = sres.fault.clone();
@@ -182,6 +202,7 @@ pub fn run_loop(
                     provenance_ids: prov_ids,
                     artifact_path: None,
                     observations: Vec::new(),
+                    citations: draft.citations.clone(),
                 };
             }
             continue;
@@ -197,5 +218,6 @@ pub fn run_loop(
         provenance_ids: prov_ids,
         artifact_path: None,
         observations: Vec::new(),
+        citations: Vec::new(),
     }
 }
