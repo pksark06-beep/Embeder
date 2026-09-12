@@ -201,7 +201,7 @@ BYOK secrets stored in the OS keychain, never passed to workers.
 | Phase | Deliverable | Exit criterion (measurable) |
 |---|---|---|
 | **P0** | This spec + ADRs ratified | Decisions accepted; open register (§11) closed. |
-| **P1** | Verification loop core, headless | STM32 "blink + UART" project goes intent→✅ compiled→✅ Renode-verified with provenance, no UI. |
+| **P1** ✅ DONE | Verification loop core, headless (Rust) | MET 2026-09-12: STM32 blink+UART goes intent→✅ real compile (arm-none-eabi-gcc)→✅ Renode-verified (USART2 captured) with provenance, no UI. |
 | **P2** | Datasheet grounding (structured) | Register/pinmux queries answered from SVD/curated data with source citations, zero fabricated addresses in test set. |
 | **P3** | Tauri shell wraps P1–P2 | Same P1 flow driven from the UI with live compile/sim logs + tier badges. |
 | **P4** | Simulation breadth | RP2040 + ESP32 engines behind one MCP interface; verifiability-boundary objects surfaced in UI. |

@@ -1,37 +1,62 @@
-//! Real `arm-none-eabi-gcc` compile oracle (P1b). Compiled but not yet exercised —
-//! the toolchain isn't installed on this machine. When it is, this drops in behind
-//! [`CompileOracle`] with no changes to the loop.
+//! Real `arm-none-eabi-gcc` compile oracle (P1b).
 //!
-//! NOTE: the current cflags produce a `-c` object, enough to exercise the parser end
-//! to end. A Renode-bootable ELF additionally needs a startup file + linker script
-//! (tracked in docs/P1-verification-loop.md §8).
-#![allow(dead_code)]
+//! With a board build profile (CPU flags + startup source + linker script) it
+//! compiles AND links a bootable ELF; without a linker script it falls back to a
+//! `-c` object build. Slots behind [`CompileOracle`] with no changes to the loop.
 
 use crate::gcc::parse_gcc_stderr;
 use crate::oracle::{CompileOracle, CompileResult, Diagnostic, FirmwareDraft};
 use std::fs;
+use std::path::PathBuf;
 use std::process::Command;
+use std::sync::atomic::{AtomicU64, Ordering};
+
+/// Per-process sequence so concurrent compiles never share a build directory.
+static BUILD_SEQ: AtomicU64 = AtomicU64::new(0);
 
 pub struct ArmGccOracle {
     pub cc: String,
-    pub cflags: Vec<String>,
+    pub cpu_flags: Vec<String>,
+    pub support_sources: Vec<PathBuf>, // board support (startup.c, ...) compiled with the app
+    pub linker_script: Option<PathBuf>,
+    pub extra_flags: Vec<String>,
 }
 
 impl Default for ArmGccOracle {
     fn default() -> Self {
         Self {
             cc: "arm-none-eabi-gcc".to_string(),
-            cflags: vec![
-                "-mcpu=cortex-m4".to_string(),
-                "-mthumb".to_string(),
-                "-nostdlib".to_string(),
-                "-c".to_string(),
-            ],
+            cpu_flags: vec!["-mcpu=cortex-m4".into(), "-mthumb".into()],
+            support_sources: Vec::new(),
+            linker_script: None,
+            extra_flags: vec!["-nostdlib".into(), "-c".into()],
         }
     }
 }
 
 impl ArmGccOracle {
+    /// Board profile for the STM32F4 blink+UART target. `firmware_dir` points at
+    /// `firmware/stm32-blink-uart`.
+    pub fn stm32f4(firmware_dir: impl Into<PathBuf>) -> Self {
+        let dir = firmware_dir.into();
+        Self {
+            cc: "arm-none-eabi-gcc".to_string(),
+            cpu_flags: vec!["-mcpu=cortex-m4".into(), "-mthumb".into()],
+            support_sources: vec![dir.join("src").join("startup.c")],
+            linker_script: Some(dir.join("link").join("stm32f4.ld")),
+            extra_flags: vec![
+                "-nostdlib".into(),
+                "-ffreestanding".into(),
+                "-ffunction-sections".into(),
+                "-fdata-sections".into(),
+                "-Wall".into(),
+                "-O0".into(),
+                "-g".into(),
+                "-Wl,--gc-sections".into(),
+            ],
+        }
+    }
+
     pub fn available(&self) -> bool {
         Command::new(&self.cc).arg("--version").output().is_ok()
     }
@@ -55,54 +80,72 @@ impl CompileOracle for ArmGccOracle {
 
     fn compile(&self, draft: &FirmwareDraft) -> CompileResult {
         if !self.available() {
-            return CompileResult {
-                ok: false,
-                diagnostics: vec![Diagnostic {
-                    severity: "error".to_string(),
-                    message: format!("{} not installed", self.cc),
-                    file: None,
-                    line: None,
-                    col: None,
-                    raw: String::new(),
-                }],
-                stdout: String::new(),
-                stderr: String::new(),
-                artifact_path: None,
-                toolchain: format!("{} (absent)", self.cc),
-                toolchain_available: false,
-            };
+            return absent(&self.cc);
         }
 
-        let dir = std::env::temp_dir().join(format!("embeder-build-{}", std::process::id()));
-        let _ = fs::create_dir_all(&dir);
+        let seq = BUILD_SEQ.fetch_add(1, Ordering::Relaxed);
+        let dir = std::env::temp_dir().join(format!(
+            "embeder-build-{}-{}-{}",
+            std::process::id(),
+            seq,
+            draft.target
+        ));
+        let _ = fs::remove_dir_all(&dir);
+        if fs::create_dir_all(&dir).is_err() {
+            return err_result(&self.cc, "cannot create build dir");
+        }
+
+        // Write model-authored sources; collect the compilable ones.
+        let mut sources: Vec<PathBuf> = Vec::new();
         for (rel, src) in &draft.files {
             let p = dir.join(rel);
             if let Some(parent) = p.parent() {
                 let _ = fs::create_dir_all(parent);
             }
-            let _ = fs::write(&p, src);
+            if fs::write(&p, src).is_err() {
+                return err_result(&self.cc, &format!("cannot write {}", p.display()));
+            }
+            if rel.ends_with(".c") || rel.ends_with(".s") || rel.ends_with(".S") {
+                sources.push(p);
+            }
         }
-        let out_obj = dir.join("out.o");
+        for s in &self.support_sources {
+            sources.push(s.clone());
+        }
 
         let mut cmd = Command::new(&self.cc);
-        cmd.args(&self.cflags)
-            .arg(dir.join(&draft.entry))
-            .arg("-o")
-            .arg(&out_obj);
+        cmd.args(&self.cpu_flags).args(&self.extra_flags);
+
+        let artifact = if let Some(ld) = &self.linker_script {
+            let out = dir.join("firmware.elf");
+            cmd.arg("-T").arg(ld);
+            for s in &sources {
+                cmd.arg(s);
+            }
+            cmd.arg("-o").arg(&out);
+            out
+        } else {
+            let out = dir.join("out.o");
+            for s in &sources {
+                cmd.arg(s);
+            }
+            cmd.arg("-o").arg(&out);
+            out
+        };
 
         match cmd.output() {
             Ok(o) => {
                 let stderr = String::from_utf8_lossy(&o.stderr).to_string();
                 let stdout = String::from_utf8_lossy(&o.stdout).to_string();
                 let diagnostics = parse_gcc_stderr(&stderr);
-                let ok = o.status.success();
+                let ok = o.status.success() && artifact.exists();
                 CompileResult {
                     ok,
                     diagnostics,
                     stdout,
                     stderr,
                     artifact_path: if ok {
-                        Some(out_obj.to_string_lossy().to_string())
+                        Some(artifact.to_string_lossy().to_string())
                     } else {
                         None
                     },
@@ -110,22 +153,45 @@ impl CompileOracle for ArmGccOracle {
                     toolchain_available: true,
                 }
             }
-            Err(e) => CompileResult {
-                ok: false,
-                diagnostics: vec![Diagnostic {
-                    severity: "error".to_string(),
-                    message: format!("failed to run {}: {}", self.cc, e),
-                    file: None,
-                    line: None,
-                    col: None,
-                    raw: String::new(),
-                }],
-                stdout: String::new(),
-                stderr: String::new(),
-                artifact_path: None,
-                toolchain: format!("{} (error)", self.cc),
-                toolchain_available: false,
-            },
+            Err(e) => err_result(&self.cc, &format!("failed to run {}: {}", self.cc, e)),
         }
+    }
+}
+
+fn absent(cc: &str) -> CompileResult {
+    CompileResult {
+        ok: false,
+        diagnostics: vec![Diagnostic {
+            severity: "error".into(),
+            message: format!("{} not installed", cc),
+            file: None,
+            line: None,
+            col: None,
+            raw: String::new(),
+        }],
+        stdout: String::new(),
+        stderr: String::new(),
+        artifact_path: None,
+        toolchain: format!("{} (absent)", cc),
+        toolchain_available: false,
+    }
+}
+
+fn err_result(cc: &str, msg: &str) -> CompileResult {
+    CompileResult {
+        ok: false,
+        diagnostics: vec![Diagnostic {
+            severity: "error".into(),
+            message: msg.to_string(),
+            file: None,
+            line: None,
+            col: None,
+            raw: String::new(),
+        }],
+        stdout: String::new(),
+        stderr: String::new(),
+        artifact_path: None,
+        toolchain: format!("{} (error)", cc),
+        toolchain_available: false,
     }
 }

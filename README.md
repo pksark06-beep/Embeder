@@ -19,25 +19,36 @@ firmware/              Example targets (STM32 blink+UART is the P1 exit criterio
 servers/               Python MCP tool servers (ADR-0001) — arrives at P1b
 ```
 
-## Status: Phase 1 (verification loop core, headless)
+## Status: Phase 1 COMPLETE (verification loop core, headless)
 
-- **P1a — mechanics: DONE, verified on this machine.** The closed-loop state machine,
-  the real GCC-diagnostic parser, the provenance ledger, and tier assignment, driven
-  by *fixture* oracles. 8/8 tests pass; the demo reaches VERIFIED end to end.
-- **P1b — real exit criterion: pending toolchains.** Wire `arm-none-eabi-gcc` +
-  `Renode` behind the same oracle traits (`ArmGccOracle`, `RenodeOracle` are already
-  stubbed in `core/src/`). Requires installing those toolchains.
+- **P1a — mechanics: DONE.** Closed-loop state machine, real GCC-diagnostic parser,
+  provenance ledger, and tier assignment, driven by *fixture* oracles.
+- **P1b — real exit criterion: DONE.** The real STM32F4 blink+UART firmware compiles
+  and links with `arm-none-eabi-gcc`, boots on Renode's `stm32f4_discovery` platform,
+  and its USART2 banner is captured in-simulation — `intent → REAL compile →
+  self-heal → REAL Renode sim → VERIFIED`.
 
-### Build & run (Rust toolchain installed via rustup)
+Verified on this machine: **11/11 tests** (8 default + 3 real-toolchain), rustc 1.98.1
+(x86_64-pc-windows-gnu), Arm GNU Toolchain 12.2.1, Renode 1.16.0.
+
+### Build & run
 
 ```powershell
 $env:Path = "$env:USERPROFILE\.cargo\bin;$env:Path"   # if cargo isn't on PATH yet
-cargo test --manifest-path core\Cargo.toml             # 8 tests
+cargo test --manifest-path core\Cargo.toml             # 8 default tests
+
+# Fixture demo (no toolchains needed):
 cargo run  --manifest-path core\Cargo.toml --bin embeder-demo
+
+# Real pipeline (needs arm-none-eabi-gcc on PATH + Renode):
+$env:Path = "C:\Program Files (x86)\Arm GNU Toolchain arm-none-eabi\12.2 mpacbti-rel1\bin;$env:Path"
+cargo run  --manifest-path core\Cargo.toml --bin embeder-demo -- --real
+cargo test --manifest-path core\Cargo.toml --test real_toolchain -- --ignored   # 3 real tests
 ```
 
-Expected: `intent → compiled → (self-heal) → simulated → VERIFIED`, reached after one
-self-heal iteration, with a provenance trail written to `.embeder/provenance.jsonl`.
+Expected (`--real`): VERIFIED after one self-heal, `observed uart = Hello from Embeder`,
+with provenance in `.embeder/provenance-real.jsonl`. `EMBEDER_RENODE` overrides the
+Renode path.
 
 ## Design integrity
 

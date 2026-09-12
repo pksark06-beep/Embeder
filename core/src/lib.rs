@@ -19,9 +19,11 @@ pub mod fixtures;
 pub mod armgcc;
 pub mod renode;
 
+pub use armgcc::ArmGccOracle;
 pub use engine::*;
 pub use fixtures::*;
 pub use gcc::parse_gcc_stderr;
 pub use oracle::*;
 pub use provenance::*;
+pub use renode::RenodeOracle;
 pub use tiers::*;

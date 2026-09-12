@@ -1,11 +1,13 @@
-//! `embeder-demo` — headless proof of the verification loop (P1a).
+//! `embeder-demo` — headless proof of the verification loop.
 //!
-//! A scripted codegen (LLM stand-in) first ships a firmware with a compile bug, then
-//! self-heals once the structured diagnostic is in context. Uses fixture oracles so
-//! it runs with no toolchains installed. Exit code is non-zero if the loop fails to
-//! reach VERIFIED — this is runnable proof, not a print statement.
+//!   (default)  fixture oracles, no toolchains needed (P1a).
+//!   --real     real arm-none-eabi-gcc + Renode (P1b): intent -> REAL compile ->
+//!              (self-heal) -> REAL Renode simulation -> VERIFIED.
+//!
+//! Exit code is non-zero if the loop fails to reach VERIFIED — runnable proof.
 
 use embeder_core::*;
+use std::path::{Path, PathBuf};
 
 const BLINK_UART_OK: &str = r#"#include <stdint.h>
 /* STM32 blink + UART (illustrative) */
@@ -18,15 +20,13 @@ int main(void) {
 }
 "#;
 
+/// Fixture-mode model stand-in: ships a bug, then self-heals.
 struct ScriptedCodegen;
-
 impl Codegen for ScriptedCodegen {
     fn generate(&mut self, ctx: &LoopContext) -> FirmwareDraft {
         let src = if ctx.compile_diagnostics.is_empty() {
-            // First attempt: ship a bug.
             BLINK_UART_OK.replace("toggle_led();", &format!("toggle_led()  {}", BUG_MARKER))
         } else {
-            // Self-heal using the compiler diagnostic that is now in context.
             BLINK_UART_OK.to_string()
         };
         FirmwareDraft {
@@ -37,20 +37,35 @@ impl Codegen for ScriptedCodegen {
     }
 }
 
-fn main() {
-    let mut ledger = ProvenanceLedger::new(".embeder/provenance.jsonl").expect("open ledger");
-    let mut codegen = ScriptedCodegen;
+/// Real-mode model stand-in: reads the actual firmware, ships a broken first draft
+/// (a `#error`), then self-heals to the real source once the diagnostic is in context.
+struct RealCodegen {
+    good: String,
+}
+impl RealCodegen {
+    fn new(fw_dir: &Path) -> Self {
+        let good = std::fs::read_to_string(fw_dir.join("src").join("main.c"))
+            .expect("read firmware main.c");
+        Self { good }
+    }
+}
+impl Codegen for RealCodegen {
+    fn generate(&mut self, ctx: &LoopContext) -> FirmwareDraft {
+        let src = if ctx.compile_diagnostics.is_empty() {
+            format!("#error EMBEDER_FIRST_DRAFT_BUG\n{}", self.good)
+        } else {
+            self.good.clone()
+        };
+        FirmwareDraft {
+            target: "stm32f4-discovery".to_string(),
+            entry: "main.c".to_string(),
+            files: vec![("main.c".to_string(), src)],
+        }
+    }
+}
 
-    let outcome = run_loop(
-        "Blink an LED and print over UART on STM32",
-        &mut codegen,
-        &FixtureCompileOracle,
-        &FixtureSimOracle,
-        &mut ledger,
-        &LoopConfig::default(),
-    );
-
-    println!("=== Embeder P1a verification loop (fixture oracles) ===");
+fn print_outcome(title: &str, outcome: &LoopOutcome) {
+    println!("=== {} ===", title);
     println!("state      : {:?}", outcome.state);
     if let Some(t) = &outcome.tier {
         println!("tier       : {} {}", t.symbol(), t.as_str());
@@ -72,16 +87,71 @@ fn main() {
         println!("observed   : {} = {}", k, v);
     }
     println!(
-        "provenance : {} entries -> .embeder/provenance.jsonl",
+        "provenance : {} entries",
         outcome.provenance_ids.len()
     );
+}
 
-    assert!(
-        matches!(outcome.state, LoopState::Verified),
-        "loop did not reach VERIFIED"
+fn run_fixture() {
+    let mut ledger = ProvenanceLedger::new(".embeder/provenance.jsonl").expect("open ledger");
+    let mut codegen = ScriptedCodegen;
+    let outcome = run_loop(
+        "Blink an LED and print over UART on STM32",
+        &mut codegen,
+        &FixtureCompileOracle,
+        &FixtureSimOracle,
+        &mut ledger,
+        &LoopConfig::default(),
     );
+    print_outcome("Embeder P1a verification loop (fixture oracles)", &outcome);
+
+    assert!(matches!(outcome.state, LoopState::Verified), "loop did not reach VERIFIED");
     assert_eq!(outcome.tier, Some(Tier::Verified), "final tier must be Verified");
     assert_eq!(outcome.attempts, 2, "expected exactly one self-heal iteration");
-
     println!("\nOK: intent -> compiled -> (self-heal) -> simulated -> VERIFIED, with provenance.");
+}
+
+fn run_real() {
+    let fw = PathBuf::from("firmware/stm32-blink-uart");
+    let renode = std::env::var("EMBEDER_RENODE")
+        .unwrap_or_else(|_| r"C:\Program Files\Renode\bin\Renode.exe".to_string());
+
+    let cc = ArmGccOracle::stm32f4(&fw);
+    let sim = RenodeOracle::stm32f4(renode);
+
+    if !cc.available() {
+        eprintln!("arm-none-eabi-gcc not on PATH — add the Arm toolchain bin to PATH.");
+        std::process::exit(2);
+    }
+    if !sim.available() {
+        eprintln!("Renode not found — set EMBEDER_RENODE to Renode.exe.");
+        std::process::exit(2);
+    }
+
+    let mut ledger = ProvenanceLedger::new(".embeder/provenance-real.jsonl").expect("open ledger");
+    let mut codegen = RealCodegen::new(&fw);
+    let outcome = run_loop(
+        "Blink an LED and print over UART on STM32 (REAL toolchain)",
+        &mut codegen,
+        &cc,
+        &sim,
+        &mut ledger,
+        &LoopConfig::default(),
+    );
+    print_outcome(
+        "Embeder P1b verification loop (REAL arm-none-eabi-gcc + Renode)",
+        &outcome,
+    );
+
+    assert!(matches!(outcome.state, LoopState::Verified), "real loop did not reach VERIFIED");
+    assert_eq!(outcome.tier, Some(Tier::Verified), "final tier must be Verified");
+    println!("\nOK: intent -> REAL compile -> (self-heal) -> REAL Renode sim -> VERIFIED.");
+}
+
+fn main() {
+    if std::env::args().any(|a| a == "--real") {
+        run_real();
+    } else {
+        run_fixture();
+    }
 }

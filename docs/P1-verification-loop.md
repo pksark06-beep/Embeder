@@ -1,9 +1,10 @@
 # P1 — Verification Loop Core (component design)
 
 > Implements the thesis (SYSTEM_SPEC §1, §7) as the first runnable component.
-> Status: **P1a implemented in the Rust Core** (`core/`, fixture oracles) — builds
-> clean, 8/8 tests pass, demo reaches VERIFIED. **P1b pending** (real
-> `arm-none-eabi-gcc` + `Renode`). Date: 2026-09-12.
+> Status: **P1 COMPLETE.** P1a (fixture oracles) and P1b (real `arm-none-eabi-gcc`
+> 12.2.1 + Renode 1.16.0) both verified on this machine — 11/11 tests pass, and the
+> real STM32F4 firmware compiles, links, boots in Renode, and emits its USART2 banner
+> in-simulation → VERIFIED. Date: 2026-09-12.
 
 ## 1. Scope
 
@@ -111,13 +112,26 @@ never promotes them. (SYSTEM_SPEC §2.)
 - **Provenance** (1 test): bug-then-heal writes exactly 4 records (compile-fail,
   compile-ok, simulate, verify) to the ledger.
 
-## 8. P1b — path to the real exit criterion
-1. Install `arm-none-eabi-gcc` (GNU Arm Embedded) and `Renode`.
-2. Real STM32 build: `main.c` + startup + linker script → ELF (not just `-c` object).
-3. `RenodeOracle`: emit a `.resc`, boot the ELF on an STM32F4 platform, capture USART2
-   + GPIO, populate `observations` and the boundary object, assert on captured UART.
-4. Swap `FixtureCompileOracle/FixtureSimOracle` → `ArmGccOracle/RenodeOracle`. No loop
-   changes — that is the point of the interface.
+## 8. P1b — real exit criterion (DONE)
+Achieved 2026-09-12, no changes to the loop (only new oracle implementations):
+1. Installed Arm GNU Toolchain 12.2.1 + Renode 1.16.0 (both via winget).
+2. Real STM32F4 target under `firmware/stm32-blink-uart/`: register-level `main.c`,
+   C `startup.c` (vector table + .data/.bss init), and `link/stm32f4.ld`.
+3. `ArmGccOracle::stm32f4` compiles+links a real ELF (per-invocation build dir, so
+   concurrent compiles are isolated).
+4. `RenodeOracle::stm32f4` templates a `.resc` (`LoadPlatformDescription
+   stm32f4_discovery` → `LoadELF` → `usart2 CreateFileBackend` → `RunFor "0.5"` →
+   `quit`), runs Renode headless (`--console --disable-gui --plain`), and passes iff
+   the captured USART2 text contains the banner.
+5. `cargo run -- --real` drives the loop with these oracles: 100 bytes captured
+   (`"Hello from Embeder\r\n"` × 5) → VERIFIED. Regression test:
+   `real_full_loop_compile_sim_verifies` (`--ignored`).
+
+### Known limitations / next hardening
+- No wall-clock timeout around the Renode subprocess yet (relies on the `quit` in the
+  `.resc`); add `wait_timeout` before this runs unattended in CI.
+- Renode is invoked directly; per ADR-0001 this should move behind a Python MCP
+  Simulation server. Same for compile (Firmware MCP server).
 
 ## 9. Sequencing note — RESOLVED
 The Core is built natively in **Rust from Phase 1** (user decision, 2026-09-12),
