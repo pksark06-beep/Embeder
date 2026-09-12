@@ -1,0 +1,118 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!-- Minimal, hand-authored CMSIS-SVD excerpt for STM32F407, containing exactly the
+     registers exercised by firmware/stm32-blink-uart. Addresses transcribed from the
+     STM32F4 reference manual (RM0090). Authoritative structured source (ADR-0002);
+     drop a full vendor .svd next to this file and the same parser handles it. -->
+<device schemaVersion="1.1">
+  <name>STM32F407_MINI</name>
+  <version>1.0</version>
+  <description>Minimal STM32F4 excerpt (RCC, GPIOA, USART2) for Embeder P2 grounding.</description>
+  <addressUnitBits>8</addressUnitBits>
+  <width>32</width>
+  <peripherals>
+    <peripheral>
+      <name>RCC</name>
+      <description>Reset and clock control</description>
+      <baseAddress>0x40023800</baseAddress>
+      <registers>
+        <register>
+          <name>AHB1ENR</name>
+          <description>AHB1 peripheral clock enable register</description>
+          <addressOffset>0x30</addressOffset>
+          <fields>
+            <field>
+              <name>GPIOAEN</name>
+              <description>IO port A clock enable</description>
+              <bitOffset>0</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>APB1ENR</name>
+          <description>APB1 peripheral clock enable register</description>
+          <addressOffset>0x40</addressOffset>
+          <fields>
+            <field>
+              <name>USART2EN</name>
+              <description>USART2 clock enable</description>
+              <bitOffset>17</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>GPIOA</name>
+      <description>General-purpose I/Os port A</description>
+      <baseAddress>0x40020000</baseAddress>
+      <registers>
+        <register>
+          <name>MODER</name>
+          <description>GPIO port mode register</description>
+          <addressOffset>0x00</addressOffset>
+        </register>
+        <register>
+          <name>ODR</name>
+          <description>GPIO port output data register</description>
+          <addressOffset>0x14</addressOffset>
+        </register>
+        <register>
+          <name>AFRL</name>
+          <description>GPIO alternate function low register</description>
+          <addressOffset>0x20</addressOffset>
+        </register>
+      </registers>
+    </peripheral>
+    <peripheral>
+      <name>USART2</name>
+      <description>Universal synchronous asynchronous receiver transmitter</description>
+      <baseAddress>0x40004400</baseAddress>
+      <registers>
+        <register>
+          <name>SR</name>
+          <description>Status register</description>
+          <addressOffset>0x00</addressOffset>
+          <fields>
+            <field>
+              <name>TXE</name>
+              <description>Transmit data register empty</description>
+              <bitOffset>7</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+        <register>
+          <name>DR</name>
+          <description>Data register</description>
+          <addressOffset>0x04</addressOffset>
+        </register>
+        <register>
+          <name>BRR</name>
+          <description>Baud rate register</description>
+          <addressOffset>0x08</addressOffset>
+        </register>
+        <register>
+          <name>CR1</name>
+          <description>Control register 1</description>
+          <addressOffset>0x0C</addressOffset>
+          <fields>
+            <field>
+              <name>TE</name>
+              <description>Transmitter enable</description>
+              <bitOffset>3</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+            <field>
+              <name>UE</name>
+              <description>USART enable</description>
+              <bitOffset>13</bitOffset>
+              <bitWidth>1</bitWidth>
+            </field>
+          </fields>
+        </register>
+      </registers>
+    </peripheral>
+  </peripherals>
+</device>

@@ -6,7 +6,8 @@ venv/
 *.egg-info/
 .pytest_cache/
 
-# Rust (reserved core/, P3)
+# Rust (workspace target at repo root)
+/target/
 /core/target/
 
 # Embeder runtime

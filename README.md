@@ -8,15 +8,17 @@ hardware code it hasn't proven.
 > This is a **system**, not an app. Read [`docs/SYSTEM_SPEC.md`](docs/SYSTEM_SPEC.md)
 > first; it is the contract. Decisions are recorded in [`docs/adr/`](docs/adr/).
 
-## Repository layout
+## Repository layout (Cargo workspace)
 
 ```
 docs/                  Ratified design: system spec + ADRs + phase notes
-core/                  The Rust Core (ADR-0006): the verification-loop engine  [ACTIVE]
+core/                  Rust Core (ADR-0006): the verification-loop engine  [P1]
   src/                 loop engine, oracle traits, gcc parser, provenance, tiering
-  tests/               integration tests for the loop invariants (ADR-0007)
+  tests/               loop invariants (ADR-0007) + real-toolchain e2e (ignored)
+datasheet/             Rust crate (ADR-0002): CMSIS-SVD grounding  [P2]
+  data/                bundled STM32F4 SVD excerpt; drop full vendor .svd here too
 firmware/              Example targets (STM32 blink+UART is the P1 exit criterion)
-servers/               Python MCP tool servers (ADR-0001) — arrives at P1b
+servers/               Python MCP tool servers (ADR-0001) — future
 ```
 
 ## Status: Phase 1 COMPLETE (verification loop core, headless)
@@ -28,8 +30,15 @@ servers/               Python MCP tool servers (ADR-0001) — arrives at P1b
   and its USART2 banner is captured in-simulation — `intent → REAL compile →
   self-heal → REAL Renode sim → VERIFIED`.
 
-Verified on this machine: **11/11 tests** (8 default + 3 real-toolchain), rustc 1.98.1
-(x86_64-pc-windows-gnu), Arm GNU Toolchain 12.2.1, Renode 1.16.0.
+## Status: Phase 2 (datasheet grounding) — registers DONE
+
+- **P2 registers: DONE.** CMSIS-SVD-grounded register maps with absolute addresses,
+  source citations, and confidence tiers; **refuses rather than fabricates** on a miss
+  (ADR-0002). Addresses cross-checked against the P1 firmware. See
+  [`docs/P2-datasheet-grounding.md`](docs/P2-datasheet-grounding.md). Pinmux: next.
+
+Verified on this machine: **16/16 tests** (13 default + 3 ignored real-toolchain),
+rustc 1.98.1 (x86_64-pc-windows-gnu), Arm GNU Toolchain 12.2.1, Renode 1.16.0.
 
 ### Build & run
 

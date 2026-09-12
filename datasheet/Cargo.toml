@@ -1,0 +1,19 @@
+[package]
+name = "embeder-datasheet"
+version = "0.1.0"
+edition = "2021"
+description = "Embeder datasheet grounding: authoritative register/pinmux facts from CMSIS-SVD, with citations and honest tiering (ADR-0002)."
+# license: TBD — see OD-5
+
+[dependencies]
+embeder-core = { path = "../core" }
+# The one earned dependency: a small, pure-Rust, read-only XML parser for CMSIS-SVD.
+roxmltree = "0.20"
+
+[lib]
+name = "embeder_datasheet"
+path = "src/lib.rs"
+
+[[bin]]
+name = "datasheet-demo"
+path = "src/main.rs"

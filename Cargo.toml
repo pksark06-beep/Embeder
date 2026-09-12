@@ -1,0 +1,5 @@
+# Embeder Rust workspace (ADR-0006). The Core is dependency-free; the datasheet
+# crate isolates the one dependency it genuinely needs (an XML parser for CMSIS-SVD).
+[workspace]
+resolver = "2"
+members = ["core", "datasheet"]
