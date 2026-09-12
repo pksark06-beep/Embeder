@@ -1,0 +1,26 @@
+# Python
+__pycache__/
+*.py[cod]
+.venv/
+venv/
+*.egg-info/
+.pytest_cache/
+
+# Rust (reserved core/, P3)
+/core/target/
+
+# Embeder runtime
+.embeder/
+embeder-workspace/**/simulation/*.log
+
+# Toolchain/build artifacts
+*.elf
+*.o
+*.bin
+*.hex
+
+# OS / editor
+.DS_Store
+Thumbs.db
+.idea/
+.vscode/
