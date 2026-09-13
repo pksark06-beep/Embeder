@@ -15,6 +15,15 @@ dependencies = [
 ]
 
 [[package]]
+name = "embeder-desktop"
+version = "0.1.0"
+dependencies = [
+ "embeder-core",
+ "embeder-datasheet",
+ "serde_json",
+]
+
+[[package]]
 name = "embeder-mcp"
 version = "0.1.0"
 dependencies = [

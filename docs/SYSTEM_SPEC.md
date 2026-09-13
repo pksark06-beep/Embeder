@@ -203,7 +203,7 @@ BYOK secrets stored in the OS keychain, never passed to workers.
 | **P0** | This spec + ADRs ratified | Decisions accepted; open register (§11) closed. |
 | **P1** ✅ DONE | Verification loop core, headless (Rust) | MET 2026-09-12: STM32 blink+UART goes intent→✅ real compile (arm-none-eabi-gcc)→✅ Renode-verified (USART2 captured) with provenance, no UI. |
 | **P2** ◑ registers done | Datasheet grounding (structured) | MET for registers 2026-09-12: SVD-grounded register maps with citations + tiers, refuses (no fabrication) on a miss, addresses cross-checked against P1 firmware. Pinmux grounding still to do. |
-| **P3** | Tauri shell wraps P1–P2 | Same P1 flow driven from the UI with live compile/sim logs + tier badges. |
+| **P3** ◑ UI built | Tauri shell wraps P1–P2 | 2026-09-13: instrument-panel frontend (`desktop/dist`) + Rust dev server run the grounded loop from the UI with tier badge, boundary, citations, provenance. Tauri `src-tauri` scaffold in place; native build needs MSVC (host is windows-gnu). |
 | **P4** | Simulation breadth | RP2040 + ESP32 engines behind one MCP interface; verifiability-boundary objects surfaced in UI. |
 | **P5** | PCB assist | netlist→DRC→Gerber/BOM export (🟡/✅) from a validated graph; routing via Freerouting/human (⚠️). |
 

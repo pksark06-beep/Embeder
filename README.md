@@ -17,9 +17,10 @@ core/                  Rust Core (ADR-0006): the verification-loop engine  [P1]
   tests/               loop invariants (ADR-0007) + real-toolchain e2e (ignored)
 datasheet/             Rust crate (ADR-0002): CMSIS-SVD grounding  [P2]
   data/                bundled STM32F4 SVD excerpt; drop full vendor .svd here too
-mcp/                   Rust crate (ADR-0001): MCP client bridge + McpCompileOracle
+mcp/                   Rust crate (ADR-0001): MCP client bridge (compile/sim/datasheet)
+desktop/               UI shell (ADR-0006): dist/ frontend + dev server + src-tauri  [P3]
 firmware/              Example targets (STM32 blink+UART is the P1 exit criterion)
-servers/               Python MCP tool servers (ADR-0001): firmware_server.py + mcp_lib.py
+servers/               Python MCP tool servers: firmware / simulation / datasheet
 ```
 
 ## Status: Phase 1 COMPLETE (verification loop core, headless)
@@ -57,6 +58,21 @@ cargo run -p embeder-mcp --bin mcp_loop -- --real   # intent -> (MCP) compile + 
 Verified on this machine: **22 tests** (15 default + 7 ignored real-toolchain/MCP e2e),
 rustc 1.98.1 (x86_64-pc-windows-gnu), Arm GNU Toolchain 12.2.1, Renode 1.16.0, Python 3.12.
 Run e2e tests single-threaded: `cargo test -- --ignored --test-threads=1`.
+
+## Phase 3: UI shell (ADR-0006)
+
+An instrument-panel desktop UI over the working Core — signal-flow pipeline, tier
+verdict, verifiability boundary, grounded citations, and the provenance ledger. The
+frontend runs inside the Tauri native shell (`invoke`) or the dev server (`fetch`);
+same UI, same Core. See [`desktop/README.md`](desktop/README.md).
+
+```powershell
+cargo run -p embeder-desktop        # http://127.0.0.1:8787  (no extra toolchains)
+```
+
+> Tauri's native build on Windows needs the MSVC toolchain; this host is `windows-gnu`,
+> so the dev server is the runnable path here and `src-tauri/` is the native packaging
+> (build it under MSVC). The Tauri command mirrors the dev server's `/api/run`.
 
 ```powershell
 # The full picture: datasheet -> grounded synthesis -> real compile -> real sim -> VERIFIED

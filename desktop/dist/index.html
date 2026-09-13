@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>EMBEDER — closed-loop firmware verification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com" />
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <link rel="stylesheet" href="styles.css" />
+</head>
+<body>
+  <div class="grain" aria-hidden="true"></div>
+  <div class="scanlines" aria-hidden="true"></div>
+
+  <header class="masthead">
+    <div class="brand">
+      <div class="logo-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+      <div class="brand-text">
+        <h1>EMBEDER</h1>
+        <p>closed-loop firmware verification · <span class="mono">STM32F4 · cortex-m</span></p>
+      </div>
+    </div>
+    <div class="rig-status">
+      <span class="rig-dot" id="rigDot"></span>
+      <span id="rigStatus" class="mono">SYSTEM IDLE</span>
+    </div>
+  </header>
+
+  <main class="bench">
+    <!-- CONTROL COLUMN -->
+    <section class="panel control" style="--d:1">
+      <div class="panel-label">CONTROL</div>
+      <label class="field-label" for="goal">SYSTEM GOAL</label>
+      <div class="goal" id="goal">Blink an LED and print over UART on STM32</div>
+
+      <button class="run-btn" id="runBtn">
+        <span class="run-key"></span>
+        <span class="run-txt">RUN VERIFICATION</span>
+      </button>
+
+      <div class="pipeline" id="pipeline">
+        <div class="node" data-stage="intent"><i class="led"></i><span>INTENT</span></div>
+        <div class="node" data-stage="ground"><i class="led"></i><span>GROUND</span></div>
+        <div class="node" data-stage="compile"><i class="led"></i><span>COMPILE</span></div>
+        <div class="node" data-stage="simulate"><i class="led"></i><span>SIMULATE</span></div>
+        <div class="node terminal" data-stage="verified"><i class="led"></i><span>VERIFIED</span></div>
+      </div>
+    </section>
+
+    <!-- VERDICT COLUMN -->
+    <section class="panel verdict" style="--d:2">
+      <div class="panel-label">VERDICT</div>
+      <div class="verdict-body" id="verdictBody">
+        <div class="verdict-idle mono" id="verdictIdle">awaiting run…</div>
+        <div class="verdict-live" id="verdictLive" hidden>
+          <div class="tier" id="tierBadge"><span class="tier-sym" id="tierSym"></span><span class="tier-name" id="tierName"></span></div>
+          <div class="verdict-meta mono">
+            <span>attempts <b id="attempts">—</b></span>
+            <span id="healed"></span>
+          </div>
+          <div class="obs" id="observations"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- BOUNDARY -->
+    <section class="panel boundary" style="--d:3">
+      <div class="panel-label">VERIFIABILITY BOUNDARY</div>
+      <div class="bcols">
+        <div class="bcol verified"><h4>VERIFIED</h4><div class="chips" id="bVerified"></div></div>
+        <div class="bcol stubbed"><h4>STUBBED</h4><div class="chips" id="bStubbed"></div></div>
+        <div class="bcol oos"><h4>OUT OF SCOPE</h4><div class="chips" id="bOos"></div></div>
+      </div>
+    </section>
+
+    <!-- CITATIONS -->
+    <section class="panel citations" style="--d:4">
+      <div class="panel-label">GROUNDED ON <span class="count" id="citeCount"></span></div>
+      <ul class="cite-list" id="citeList">
+        <li class="cite-empty mono">no facts yet</li>
+      </ul>
+    </section>
+
+    <!-- PROVENANCE -->
+    <section class="panel provenance" style="--d:5">
+      <div class="panel-label">PROVENANCE LEDGER <span class="mono dim">append-only</span></div>
+      <div class="ledger" id="ledger">
+        <div class="ledger-empty mono">no records</div>
+      </div>
+    </section>
+  </main>
+
+  <footer class="footplate mono">
+    <span>EMBEDER · local-first · BYOK</span>
+    <span id="footArtifact" class="dim"></span>
+    <span class="dim">the model proposes · the toolchain disposes</span>
+  </footer>
+
+  <script src="app.js"></script>
+</body>
+</html>

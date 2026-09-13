@@ -2,4 +2,7 @@
 # crate isolates the one dependency it genuinely needs (an XML parser for CMSIS-SVD).
 [workspace]
 resolver = "2"
-members = ["core", "datasheet", "mcp"]
+members = ["core", "datasheet", "mcp", "desktop/server"]
+# The Tauri native shell has heavy platform deps (webview) and needs the MSVC
+# toolchain on Windows; keep it out of the verified workspace build.
+exclude = ["desktop/src-tauri"]
