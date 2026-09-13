@@ -6,7 +6,11 @@
 //! with no loop changes.
 
 pub mod client;
+pub mod datasheet;
 pub mod oracle;
+pub mod sim;
 
 pub use client::McpClient;
+pub use datasheet::{GroundedRegisterMap, McpDatasheet};
 pub use oracle::McpCompileOracle;
+pub use sim::McpSimOracle;

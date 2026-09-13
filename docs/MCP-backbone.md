@@ -1,7 +1,9 @@
 # MCP Backbone (ADR-0001) — component design
 
-> Status: **Firmware (compile) tool now runs over MCP**; Renode subprocess bounded by
-> a wall-clock timeout. Simulation + Datasheet MCP servers: next. Date: 2026-09-13.
+> Status: **DONE — all three tools run over MCP.** Firmware (compile), Simulation
+> (Renode), and Datasheet (CMSIS-SVD) each sit behind a local MCP server, with the
+> Rust Core as MCP client. `mcp_loop --real` runs compile + simulation entirely over
+> MCP → VERIFIED. Renode is bounded by a wall-clock timeout. Date: 2026-09-13.
 
 ## 1. Why
 ADR-0001 makes MCP the tool backbone: a uniform, schema-enforced, loggable boundary
@@ -53,10 +55,19 @@ Real-toolchain / MCP e2e tests are `#[ignore]` and best run **single-threaded**
 (`-- --test-threads=1`): a Renode cold-start contended by parallel arm-gcc builds can
 be slow, and we do not want test parallelism perturbing timing.
 
-## 7. Next
-- **Simulation MCP server:** wrap Renode behind MCP (`McpSimOracle`), same pattern.
-- **Datasheet MCP server:** expose grounded lookups over MCP; note the logic already
-  exists as the tested Rust `datasheet` crate, so decide server-wraps-crate vs. a
-  Python re-implementation (leaning: thin server over the Rust crate to avoid a second
-  SVD parser).
-- **Sandboxing (ADR-0008):** fs-jail workers to the workspace; no ambient net.
+## 7. Servers (all implemented)
+| Server | Tool(s) | Wraps | Rust client |
+|---|---|---|---|
+| `firmware_server.py` | `compile_firmware` | arm-none-eabi-gcc | `McpCompileOracle` |
+| `simulation_server.py` | `run_simulation` | Renode (headless, timeout) | `McpSimOracle` |
+| `datasheet_server.py` | `register_map`, `lookup_register` | CMSIS-SVD (stdlib xml) | `McpDatasheet` |
+
+The datasheet server parses the SVD in Python (stdlib `xml.etree`); the Rust
+`datasheet` crate remains the reference parser, and `mcp_datasheet_agrees_with_hardware`
+cross-checks that the MCP path returns the same USART2/CR1 addresses (guards drift).
+
+## 8. Next
+- **Sandboxing (ADR-0008):** fs-jail the server workers to the workspace; no ambient
+  network egress; hardware/flash actions behind explicit consent.
+- **Consolidate:** have the loop/codegen consult the *MCP* datasheet (currently the
+  in-process Rust crate is used by GroundedCodegen; the MCP path is proven in tests).

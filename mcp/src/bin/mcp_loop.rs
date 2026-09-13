@@ -4,7 +4,7 @@
 //!   --real     MCP compile + real Renode simulation
 
 use embeder_core::*;
-use embeder_mcp::McpCompileOracle;
+use embeder_mcp::{McpCompileOracle, McpSimOracle};
 use std::path::PathBuf;
 
 struct RealCodegen {
@@ -45,13 +45,13 @@ fn main() {
     let outcome = if real {
         let renode = std::env::var("EMBEDER_RENODE")
             .unwrap_or_else(|_| r"C:\Program Files\Renode\bin\Renode.exe".to_string());
-        let sim = RenodeOracle::stm32f4(renode);
+        let sim = McpSimOracle::stm32f4("python", "servers/simulation_server.py", renode);
         if !sim.available() {
-            eprintln!("Renode not found — set EMBEDER_RENODE");
+            eprintln!("MCP simulation server unavailable (need python + servers/simulation_server.py).");
             std::process::exit(2);
         }
         run_loop(
-            "Blink+UART via MCP compile + real Renode",
+            "Blink+UART fully over MCP (compile + simulation)",
             &mut codegen,
             &cc,
             &sim,
