@@ -17,8 +17,9 @@ core/                  Rust Core (ADR-0006): the verification-loop engine  [P1]
   tests/               loop invariants (ADR-0007) + real-toolchain e2e (ignored)
 datasheet/             Rust crate (ADR-0002): CMSIS-SVD grounding  [P2]
   data/                bundled STM32F4 SVD excerpt; drop full vendor .svd here too
+mcp/                   Rust crate (ADR-0001): MCP client bridge + McpCompileOracle
 firmware/              Example targets (STM32 blink+UART is the P1 exit criterion)
-servers/               Python MCP tool servers (ADR-0001) — future
+servers/               Python MCP tool servers (ADR-0001): firmware_server.py + mcp_lib.py
 ```
 
 ## Status: Phase 1 COMPLETE (verification loop core, headless)
@@ -40,8 +41,21 @@ servers/               Python MCP tool servers (ADR-0001) — future
   through the real compile+Renode loop to VERIFIED — `grounded-loop --real`.
   See [`docs/P2-datasheet-grounding.md`](docs/P2-datasheet-grounding.md). Pinmux: next.
 
-Verified on this machine: **18/18 tests** (15 default + 3 ignored real-toolchain),
-rustc 1.98.1 (x86_64-pc-windows-gnu), Arm GNU Toolchain 12.2.1, Renode 1.16.0.
+## MCP backbone (ADR-0001) — compile now runs over MCP
+
+The Firmware (compile) tool runs across the MCP protocol boundary: the Rust Core is an
+MCP **client** driving a local Python MCP server over stdio JSON-RPC, which executes
+`arm-none-eabi-gcc`. Diagnostics survive the round trip and drive self-heal. Renode is
+now bounded by a wall-clock timeout. See [`docs/MCP-backbone.md`](docs/MCP-backbone.md).
+Simulation + Datasheet MCP servers are next.
+
+```powershell
+cargo run -p embeder-mcp --bin mcp_loop -- --real   # intent -> (MCP) compile -> Renode -> VERIFIED
+```
+
+Verified on this machine: **20 tests** (15 default + 5 ignored real-toolchain/MCP e2e),
+rustc 1.98.1 (x86_64-pc-windows-gnu), Arm GNU Toolchain 12.2.1, Renode 1.16.0, Python 3.12.
+Run e2e tests single-threaded: `cargo test -- --ignored --test-threads=1`.
 
 ```powershell
 # The full picture: datasheet -> grounded synthesis -> real compile -> real sim -> VERIFIED

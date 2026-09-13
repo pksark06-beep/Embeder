@@ -6,8 +6,12 @@
 use crate::oracle::{SimOracle, SimResult};
 use crate::tiers::VerifiabilityBoundary;
 use std::fs;
-use std::process::Command;
+use std::io::Read;
+use std::process::{Command, Stdio};
 use std::sync::atomic::{AtomicU64, Ordering};
+use std::sync::mpsc;
+use std::thread;
+use std::time::{Duration, Instant};
 
 /// Per-process sequence so concurrent simulations never share a directory.
 static SIM_SEQ: AtomicU64 = AtomicU64::new(0);
@@ -18,6 +22,7 @@ pub struct RenodeOracle {
     pub uart: String,          // e.g. "sysbus.usart2"
     pub run_for_secs: String,  // virtual time to execute
     pub expect: String,        // banner that must appear on the UART
+    pub timeout_secs: u64,     // wall-clock guard on the Renode subprocess
 }
 
 impl Default for RenodeOracle {
@@ -28,6 +33,9 @@ impl Default for RenodeOracle {
             uart: "sysbus.usart2".to_string(),
             run_for_secs: "0.5".to_string(),
             expect: "Hello from Embeder".to_string(),
+            // Generous: a safety net against a true hang, not a performance bound.
+            // Renode cold-start under load can take tens of seconds; never false-fire.
+            timeout_secs: 180,
         }
     }
 }
@@ -61,6 +69,60 @@ fn fwd(p: &str) -> String {
 
 fn truncate(s: &str, n: usize) -> String {
     s.chars().take(n).collect()
+}
+
+struct RunResult {
+    code: Option<i32>,
+    output: String,
+    timed_out: bool,
+}
+
+/// Run a command with a wall-clock timeout, draining stdout/stderr on background
+/// threads so a chatty child can't deadlock on a full pipe. Kills the child on timeout.
+fn run_with_timeout(mut cmd: Command, timeout: Duration) -> std::io::Result<RunResult> {
+    cmd.stdin(Stdio::null()).stdout(Stdio::piped()).stderr(Stdio::piped());
+    let mut child = cmd.spawn()?;
+    let mut out_pipe = child.stdout.take().expect("piped stdout");
+    let mut err_pipe = child.stderr.take().expect("piped stderr");
+
+    let (tx_o, rx_o) = mpsc::channel();
+    let (tx_e, rx_e) = mpsc::channel();
+    thread::spawn(move || {
+        let mut s = String::new();
+        let _ = out_pipe.read_to_string(&mut s);
+        let _ = tx_o.send(s);
+    });
+    thread::spawn(move || {
+        let mut s = String::new();
+        let _ = err_pipe.read_to_string(&mut s);
+        let _ = tx_e.send(s);
+    });
+
+    let start = Instant::now();
+    let code;
+    let mut timed_out = false;
+    loop {
+        match child.try_wait()? {
+            Some(status) => {
+                code = status.code();
+                break;
+            }
+            None => {
+                if start.elapsed() >= timeout {
+                    let _ = child.kill();
+                    let _ = child.wait();
+                    code = None;
+                    timed_out = true;
+                    break;
+                }
+                thread::sleep(Duration::from_millis(50));
+            }
+        }
+    }
+
+    let out = rx_o.recv().unwrap_or_default();
+    let err = rx_e.recv().unwrap_or_default();
+    Ok(RunResult { code, output: format!("{}{}", out, err), timed_out })
 }
 
 impl SimOracle for RenodeOracle {
@@ -100,18 +162,21 @@ impl SimOracle for RenodeOracle {
             return fault(&self.bin, "engine_error", "cannot write resc", true);
         }
 
-        let output = Command::new(&self.bin)
-            .args(["--console", "--disable-gui", "--plain"])
-            .arg(&resc)
-            .output();
+        let mut cmd = Command::new(&self.bin);
+        cmd.args(["--console", "--disable-gui", "--plain"]).arg(&resc);
 
-        match output {
-            Ok(o) => {
-                let stdout = String::from_utf8_lossy(&o.stdout).to_string();
-                let stderr = String::from_utf8_lossy(&o.stderr).to_string();
+        match run_with_timeout(cmd, Duration::from_secs(self.timeout_secs)) {
+            Ok(run) => {
                 let uart_text = fs::read_to_string(&uart_out).unwrap_or_default();
-                let ok = uart_text.contains(&self.expect);
+                let ok = !run.timed_out && uart_text.contains(&self.expect);
                 let first_line = uart_text.lines().next().unwrap_or("").trim().to_string();
+                let fault = if run.timed_out {
+                    Some("timeout".to_string())
+                } else if ok {
+                    None
+                } else {
+                    Some("expected_uart_not_found".to_string())
+                };
                 SimResult {
                     ok,
                     boundary: Self::full_boundary(),
@@ -120,16 +185,17 @@ impl SimOracle for RenodeOracle {
                         ("uart_bytes".into(), uart_text.len().to_string()),
                     ],
                     log: format!(
-                        "renode exit={:?}; uart_captured={} bytes; expect={:?} -> pass={}\n--- renode output (truncated) ---\n{}",
-                        o.status.code(),
+                        "renode exit={:?} timed_out={}; uart_captured={} bytes; expect={:?} -> pass={}\n--- renode output (truncated) ---\n{}",
+                        run.code,
+                        run.timed_out,
                         uart_text.len(),
                         self.expect,
                         ok,
-                        truncate(&(stdout + &stderr), 900)
+                        truncate(&run.output, 900)
                     ),
                     engine: "renode 1.16.0".into(),
                     engine_available: true,
-                    fault: if ok { None } else { Some("expected_uart_not_found".into()) },
+                    fault,
                 }
             }
             Err(e) => fault(&self.bin, "engine_error", &format!("failed to run renode: {}", e), false),
