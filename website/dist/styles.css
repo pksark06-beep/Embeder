@@ -259,7 +259,10 @@ html[data-theme="dark"] .app-dots i { opacity: .85; }
 .app-frame img { width: 100%; height: auto; display: block; }
 
 .hero-visual { position: relative; width: 100%; max-width: 1060px; margin: 3.5rem auto 0; }
-.hero-visual .app-frame { transform: perspective(2200px) rotateX(2deg); }
+/* Keep the hero screenshot pixel-flat: a 3D tilt forces the browser to
+   re-rasterize the image and softens the fine UI text. Depth comes from the
+   frame's box-shadow instead. */
+.hero-visual .app-frame { transform: none; }
 .hero-visual::after {
   content: ""; position: absolute; left: 8%; right: 8%; bottom: -2rem; height: 4rem; z-index: -1;
   background: radial-gradient(60% 100% at 50% 0%, var(--glow), transparent 75%);
