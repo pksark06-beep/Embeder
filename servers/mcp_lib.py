@@ -11,6 +11,7 @@ import sys
 import json
 
 PROTOCOL_VERSION = "2024-11-05"
+MAX_REQUEST_BYTES = 2 * 1024 * 1024
 
 
 def _send(obj):
@@ -25,6 +26,10 @@ def serve(server_name, tools):
         line = sys.stdin.readline()
         if not line:
             break  # EOF: client closed
+        if len(line.encode("utf-8", errors="ignore")) > MAX_REQUEST_BYTES:
+            _send({"jsonrpc": "2.0", "id": None,
+                   "error": {"code": -32600, "message": "request exceeds MCP sandbox limit"}})
+            continue
         line = line.strip()
         if not line:
             continue

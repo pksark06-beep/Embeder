@@ -14,6 +14,23 @@ use std::sync::atomic::{AtomicU64, Ordering};
 /// Per-process sequence so concurrent compiles never share a build directory.
 static BUILD_SEQ: AtomicU64 = AtomicU64::new(0);
 
+/// Explicit configuration wins; also find the per-user Windows installation when
+/// a desktop launched before PATH changed still has the old environment.
+pub fn compiler_path() -> String {
+    if let Ok(path) = std::env::var("EMBEDER_GCC") {
+        return path;
+    }
+    if Command::new("arm-none-eabi-gcc").arg("--version").output()
+        .map(|out| out.status.success()).unwrap_or(false) {
+        return "arm-none-eabi-gcc".into();
+    }
+    if let Some(local) = std::env::var_os("LOCALAPPDATA") {
+        let path = PathBuf::from(local).join("Programs/ArmGNU/bin/arm-none-eabi-gcc.exe");
+        if path.is_file() { return path.to_string_lossy().into_owned(); }
+    }
+    "arm-none-eabi-gcc".into()
+}
+
 pub struct ArmGccOracle {
     pub cc: String,
     pub cpu_flags: Vec<String>,
@@ -25,7 +42,7 @@ pub struct ArmGccOracle {
 impl Default for ArmGccOracle {
     fn default() -> Self {
         Self {
-            cc: "arm-none-eabi-gcc".to_string(),
+            cc: compiler_path(),
             cpu_flags: vec!["-mcpu=cortex-m4".into(), "-mthumb".into()],
             support_sources: Vec::new(),
             linker_script: None,
@@ -40,7 +57,7 @@ impl ArmGccOracle {
     pub fn stm32f4(firmware_dir: impl Into<PathBuf>) -> Self {
         let dir = firmware_dir.into();
         Self {
-            cc: "arm-none-eabi-gcc".to_string(),
+            cc: compiler_path(),
             cpu_flags: vec!["-mcpu=cortex-m4".into(), "-mthumb".into()],
             support_sources: vec![dir.join("src").join("startup.c")],
             linker_script: Some(dir.join("link").join("stm32f4.ld")),
@@ -58,7 +75,8 @@ impl ArmGccOracle {
     }
 
     pub fn available(&self) -> bool {
-        Command::new(&self.cc).arg("--version").output().is_ok()
+        Command::new(&self.cc).arg("--version").output()
+            .map(|out| out.status.success()).unwrap_or(false)
     }
 
     fn version(&self) -> String {
@@ -114,6 +132,7 @@ impl CompileOracle for ArmGccOracle {
         }
 
         let mut cmd = Command::new(&self.cc);
+        cmd.current_dir(&dir);
         cmd.args(&self.cpu_flags).args(&self.extra_flags);
 
         let artifact = if let Some(ld) = &self.linker_script {

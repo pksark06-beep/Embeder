@@ -1,12 +1,13 @@
 {
   "$schema": "https://schema.tauri.app/config/2",
   "productName": "Embeder",
-  "version": "0.1.0",
+  "version": "0.2.0",
   "identifier": "dev.embeder.app",
   "build": {
     "frontendDist": "../dist"
   },
   "app": {
+    "withGlobalTauri": true,
     "windows": [
       {
         "title": "Embeder — closed-loop firmware verification",
@@ -22,7 +23,22 @@
     }
   },
   "bundle": {
-    "active": false,
-    "targets": "all"
+    "active": true,
+    "targets": "all",
+    "icon": [
+      "icons/32x32.png",
+      "icons/128x128.png",
+      "icons/128x128@2x.png",
+      "icons/icon.ico"
+    ],
+    "resources": {
+      "../../datasheet/data/stm32f4-mini.svd": "data/stm32f4-mini.svd",
+      "../../firmware/stm32-blink-uart/src/main.c": "template/stm32-blink-uart/src/main.c",
+      "../../firmware/stm32-blink-uart/src/startup.c": "template/stm32-blink-uart/src/startup.c",
+      "../../firmware/stm32-blink-uart/link/stm32f4.ld": "template/stm32-blink-uart/link/stm32f4.ld",
+      "../../firmware/stm32-blink-uart/README.md": "template/stm32-blink-uart/README.md",
+      "../../servers/codegen_server.py": "servers/codegen_server.py",
+      "../../servers/mcp_lib.py": "servers/mcp_lib.py"
+    }
   }
 }

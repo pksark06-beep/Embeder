@@ -8,9 +8,39 @@ import os
 import sys
 import tempfile
 import subprocess
+import re
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from mcp_lib import serve  # noqa: E402
+
+REPO_ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+WORKSPACE_ROOT = os.path.realpath(os.environ.get("EMBEDER_WORKSPACE_ROOT", REPO_ROOT))
+DEFAULT_RENODE = os.environ.get("EMBEDER_RENODE", r"C:\Program Files\Renode\bin\Renode.exe")
+
+
+def _within(path, root):
+    try:
+        return os.path.commonpath([os.path.realpath(path), root]) == root
+    except ValueError:
+        return False
+
+
+def _safe_renode(candidate):
+    requested = os.path.realpath(candidate)
+    configured = os.path.realpath(DEFAULT_RENODE)
+    if os.path.basename(candidate).lower() == "renode" or requested == configured:
+        return candidate
+    raise ValueError("Renode executable is not allowed by the simulation sandbox")
+
+
+def _safe_artifact(path):
+    real = os.path.realpath(path)
+    temp_root = os.path.realpath(tempfile.gettempdir())
+    if not (_within(real, WORKSPACE_ROOT) or _within(real, temp_root)):
+        raise ValueError("simulation artifact is outside the sandbox")
+    if not os.path.isfile(real):
+        raise ValueError("simulation artifact does not exist")
+    return real
 
 
 def _fwd(p):
@@ -20,6 +50,17 @@ def _fwd(p):
 def run_simulation(renode_bin="renode", platform="@platforms/boards/stm32f4_discovery.repl",
                    uart="sysbus.usart2", elf_path="", run_for_secs="0.5",
                    expect="", timeout_secs=180):
+    renode_bin = _safe_renode(renode_bin)
+    elf_path = _safe_artifact(elf_path)
+    if not platform.startswith("@platforms/"):
+        raise ValueError("only built-in Renode platforms are allowed")
+    if not re.fullmatch(r"[A-Za-z0-9_.]+", uart):
+        raise ValueError("invalid UART path")
+    run_seconds = float(run_for_secs)
+    if not 0 < run_seconds <= 10:
+        raise ValueError("simulation duration is outside the sandbox limit")
+    timeout_secs = max(1, min(int(timeout_secs), 180))
+
     build_dir = tempfile.mkdtemp(prefix="embeder-mcp-sim-")
     uart_out = os.path.join(build_dir, "uart.txt")
     resc = os.path.join(build_dir, "run.resc")

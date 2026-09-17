@@ -3,100 +3,214 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>EMBEDER — closed-loop firmware verification</title>
-  <link rel="preconnect" href="https://fonts.googleapis.com" />
-  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
-  <link href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap" rel="stylesheet" />
+  <title>Embeder — Verification Workbench</title>
+  <link rel="icon" href="favicon.ico" sizes="any" />
+  <link rel="icon" type="image/png" href="favicon.png" />
   <link rel="stylesheet" href="styles.css" />
 </head>
 <body>
-  <div class="grain" aria-hidden="true"></div>
-  <div class="scanlines" aria-hidden="true"></div>
+  <svg class="icon-sprite" aria-hidden="true">
+    <defs>
+      <symbol id="i-files" viewBox="0 0 24 24"><path d="M6 3h8l4 4v14H6zM14 3v5h5M3 7v13"/></symbol>
+      <symbol id="i-check" viewBox="0 0 24 24"><path d="m5 12 4 4L19 6"/><circle cx="12" cy="12" r="9"/></symbol>
+      <symbol id="i-chip" viewBox="0 0 24 24"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 2v4m3-4v4m3-4v4M9 18v4m3-4v4m3-4v4M2 9h4m-4 3h4m-4 3h4m12-6h4m-4 3h4m-4 3h4"/></symbol>
+      <symbol id="i-wave" viewBox="0 0 24 24"><path d="M3 12h3l2-6 4 12 3-9 2 3h4"/></symbol>
+      <symbol id="i-blocks" viewBox="0 0 24 24"><rect x="4" y="4" width="6" height="6"/><rect x="14" y="4" width="6" height="6"/><rect x="4" y="14" width="6" height="6"/><path d="M17 14v6m-3-3h6"/></symbol>
+      <symbol id="i-gear" viewBox="0 0 24 24"><circle cx="12" cy="12" r="3"/><path d="M12 2v3m0 14v3M2 12h3m14 0h3M5 5l2 2m10 10 2 2m0-14-2 2M7 17l-2 2"/></symbol>
+      <symbol id="i-save" viewBox="0 0 24 24"><path d="M5 4h12l3 3v13H4V4zM8 4v6h8V4m-9 16v-6h10v6"/></symbol>
+      <symbol id="i-play" viewBox="0 0 24 24"><path d="m8 5 11 7-11 7z"/></symbol>
+      <symbol id="i-terminal" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3m6 0h4"/></symbol>
+      <symbol id="i-refresh" viewBox="0 0 24 24"><path d="M20 7v5h-5M4 17v-5h5"/><path d="M6.1 8a7 7 0 0 1 11.4-1L20 9M4 15l2.5 2a7 7 0 0 0 11.4-1"/></symbol>
+      <symbol id="i-command" viewBox="0 0 24 24"><path d="M9 6a3 3 0 1 0-3 3h12a3 3 0 1 0-3-3v12a3 3 0 1 0 3-3H6a3 3 0 1 0 3 3z"/></symbol>
+      <symbol id="i-close" viewBox="0 0 24 24"><path d="m7 7 10 10M17 7 7 17"/></symbol>
+      <symbol id="i-more" viewBox="0 0 24 24"><circle cx="5" cy="12" r="1"/><circle cx="12" cy="12" r="1"/><circle cx="19" cy="12" r="1"/></symbol>
+      <symbol id="i-split" viewBox="0 0 24 24"><rect x="3" y="4" width="18" height="16" rx="1"/><path d="M12 4v16"/></symbol>
+      <symbol id="i-help" viewBox="0 0 24 24"><circle cx="12" cy="12" r="9"/><path d="M9.6 9a2.5 2.5 0 1 1 4.4 1.6c-1.2 1.1-2 1.4-2 3M12 17h.01"/></symbol>
+    </defs>
+  </svg>
 
-  <header class="masthead">
-    <div class="brand">
-      <div class="logo-mark" aria-hidden="true"><span></span><span></span><span></span></div>
-      <div class="brand-text">
-        <h1>EMBEDER</h1>
-        <p>closed-loop firmware verification · <span class="mono">STM32F4 · cortex-m</span></p>
-      </div>
-    </div>
-    <div class="rig-status">
-      <span class="rig-dot" id="rigDot"></span>
-      <span id="rigStatus" class="mono">SYSTEM IDLE</span>
-    </div>
+  <header class="titlebar">
+    <div class="brand-mark" aria-hidden="true"><span></span><span></span><span></span></div>
+    <strong>EMBEDER</strong>
+    <nav class="app-menu" aria-label="Application menu">
+      <button data-command="palette">File</button>
+      <button data-command="palette">Edit</button>
+      <button data-command="palette">View</button>
+      <button data-command="verify">Run</button>
+      <button data-page-target="extensions">Extensions</button>
+    </nav>
+    <div class="window-title">stm32-blink-uart — Embeder</div>
+    <span class="preview-tag">MVP</span>
   </header>
 
-  <main class="bench">
-    <!-- CONTROL COLUMN -->
-    <section class="panel control" style="--d:1">
-      <div class="panel-label">CONTROL</div>
-      <label class="field-label" for="goal">SYSTEM GOAL</label>
-      <div class="goal" id="goal">Blink an LED and print over UART on STM32</div>
+  <div class="commandbar">
+    <div class="toolbar-group">
+      <button class="icon-button" id="toolbarSave" title="Save (Ctrl+S)" aria-label="Save active file"><svg><use href="#i-save"/></svg></button>
+      <button class="icon-button" data-command="palette" title="Command palette" aria-label="Open command palette"><svg><use href="#i-command"/></svg></button>
+      <button class="icon-button" id="toggleSidebarTop" title="Toggle Explorer" aria-label="Toggle Explorer"><svg><use href="#i-files"/></svg></button>
+      <button class="icon-button" id="toggleAuxTop" title="Toggle Context" aria-label="Toggle Context"><svg><use href="#i-more"/></svg></button>
+      <button class="icon-button" id="togglePanelTop" title="Toggle terminal panel (Ctrl+J)" aria-label="Toggle terminal panel"><svg><use href="#i-terminal"/></svg></button>
+    </div>
+    <button class="command-trigger" id="commandTrigger"><svg><use href="#i-command"/></svg><span>Search files or run a command</span><kbd>Ctrl Shift P</kbd></button>
+    <div class="toolbar-actions">
+      <button class="toolbar-button" id="toolbarMcp"><span class="status-dot checking" id="toolbarMcpDot"></span>MCP</button>
+      <button class="toolbar-button" id="toolbarVerify"><svg><use href="#i-check"/></svg>Verify</button>
+      <button class="toolbar-button" id="toolbarGenerate" title="Generate firmware with the model, then verify it">✦ Generate</button>
+      <button class="toolbar-button" id="toolbarBuild" title="Build workspace (Ctrl+Shift+B)">Build</button>
+      <button class="toolbar-button primary" id="toolbarRun"><svg><use href="#i-play"/></svg>Build & simulate</button>
+      <span class="target-select mono" id="targetChip">STM32F407</span>
+    </div>
+  </div>
 
-      <button class="run-btn" id="runBtn">
-        <span class="run-key"></span>
-        <span class="run-txt">RUN VERIFICATION</span>
-      </button>
-
-      <div class="pipeline" id="pipeline">
-        <div class="node" data-stage="intent"><i class="led"></i><span>INTENT</span></div>
-        <div class="node" data-stage="ground"><i class="led"></i><span>GROUND</span></div>
-        <div class="node" data-stage="compile"><i class="led"></i><span>COMPILE</span></div>
-        <div class="node" data-stage="simulate"><i class="led"></i><span>SIMULATE</span></div>
-        <div class="node terminal" data-stage="verified"><i class="led"></i><span>VERIFIED</span></div>
+  <div class="workbench">
+    <nav class="activitybar" aria-label="Workbench views">
+      <div class="activity-top">
+        <button class="activity-item active" data-page="verify" title="Build firmware" aria-label="Build firmware"><svg><use href="#i-play"/></svg><span>Build</span></button>
+        <button class="activity-item" data-page="editor" title="Files (review)" aria-label="Files"><svg><use href="#i-files"/></svg><span>Files</span></button>
+        <button class="activity-item" data-page="datasheet" title="Datasheet" aria-label="Datasheet"><svg><use href="#i-chip"/></svg><span>Data</span></button>
+        <button class="activity-item" data-page="simulation" title="Simulation" aria-label="Simulation"><svg><use href="#i-wave"/></svg><span>Sim</span></button>
+        <button class="activity-item" data-page="extensions" title="Extensions" aria-label="Extensions"><svg><use href="#i-blocks"/></svg><span>Ext</span></button>
+        <button class="activity-item" data-page="guide" title="Getting started" aria-label="Getting started"><svg><use href="#i-help"/></svg><span>Guide</span></button>
       </div>
-    </section>
+      <button class="activity-item activity-bottom" data-page="settings" title="Settings" aria-label="Settings"><svg><use href="#i-gear"/></svg><span>Settings</span></button>
+    </nav>
 
-    <!-- VERDICT COLUMN -->
-    <section class="panel verdict" style="--d:2">
-      <div class="panel-label">VERDICT</div>
-      <div class="verdict-body" id="verdictBody">
-        <div class="verdict-idle mono" id="verdictIdle">awaiting run…</div>
-        <div class="verdict-live" id="verdictLive" hidden>
-          <div class="tier" id="tierBadge"><span class="tier-sym" id="tierSym"></span><span class="tier-name" id="tierName"></span></div>
-          <div class="verdict-meta mono">
-            <span>attempts <b id="attempts">—</b></span>
-            <span id="healed"></span>
-          </div>
-          <div class="obs" id="observations"></div>
+    <aside class="sidebar">
+      <header class="sidebar-header"><span id="sideTitle">EXPLORER</span><button class="plain-icon" id="toggleSidebar" title="Collapse Explorer"><svg><use href="#i-close"/></svg></button></header>
+      <div class="sidebar-content" id="sideContent"></div>
+    </aside>
+
+    <main class="mainstage">
+      <section class="page editor-page" data-page="editor">
+        <div class="editor-tabs" id="editorTabs"></div>
+        <div class="editor-breadcrumbs">
+          <span>firmware</span><i>›</i><span>stm32-blink-uart</span><i>›</i><strong id="activeBreadcrumb">src/main.c</strong>
+          <div class="editor-actions"><button class="plain-icon" id="splitEditor" title="Split editor"><svg><use href="#i-split"/></svg></button><button class="plain-icon" id="editorMore" title="More actions"><svg><use href="#i-more"/></svg></button></div>
         </div>
-      </div>
-    </section>
+        <div class="editor-pane-grid" id="editorPaneGrid">
+        <div class="editor-surface" id="editorSurface">
+          <div class="line-numbers mono" id="lineNumbers" aria-hidden="true"></div>
+          <div class="code-viewport" id="codeViewport">
+            <pre class="code-highlight mono" id="codeHighlight" aria-hidden="true"></pre>
+            <textarea class="code-input mono" id="codeEditor" aria-label="Firmware source editor" spellcheck="false" autocapitalize="off" autocomplete="off"></textarea>
+          </div>
+          <pre class="minimap mono" id="minimap" aria-hidden="true"></pre>
+        </div>
+        </div>
+      </section>
 
-    <!-- BOUNDARY -->
-    <section class="panel boundary" style="--d:3">
-      <div class="panel-label">VERIFIABILITY BOUNDARY</div>
-      <div class="bcols">
-        <div class="bcol verified"><h4>VERIFIED</h4><div class="chips" id="bVerified"></div></div>
-        <div class="bcol stubbed"><h4>STUBBED</h4><div class="chips" id="bStubbed"></div></div>
-        <div class="bcol oos"><h4>OUT OF SCOPE</h4><div class="chips" id="bOos"></div></div>
-      </div>
-    </section>
+      <section class="page" data-page="verify" hidden>
+        <header class="page-header"><div><span class="eyebrow">DESCRIBE › GENERATE › VERIFY</span><h1>Build firmware</h1><p>Describe what you want in plain words. The model drafts the firmware, then Embeder really compiles and simulates it — and shows you the proof.</p></div></header>
+        <article class="surface-card describe-card">
+          <label class="describe-label" for="intentInput">What do you want to build?</label>
+          <textarea id="intentInput" class="describe-input" rows="2" spellcheck="false" placeholder="e.g. Blink PA5 and print 'Hello from Embeder' over USART2">Blink PA5 and print 'Hello from Embeder' over USART2 on STM32F4</textarea>
+          <div class="describe-actions">
+            <button class="button primary" id="studioGenerate"><svg><use href="#i-play"/></svg>Generate &amp; verify</button>
+            <button class="button" id="studioBuild">Build my saved files instead</button>
+            <span class="describe-hint mono">STM32F407 · Cortex-M4 — the model drafts, the oracles verify.<kbd>Ctrl</kbd>+<kbd>Enter</kbd></span>
+          </div>
+        </article>
+        <div class="summary-grid">
+          <article class="metric"><span>Current verdict</span><strong id="verdictMetric">Not run</strong><small id="verdictMode">Real GCC + Renode</small></article>
+          <article class="metric"><span>MCP transport</span><strong id="mcpMetric">Checking…</strong><small>Isolated stdio workers</small></article>
+          <article class="metric"><span>Target</span><strong>STM32F407</strong><small>Cortex-M4 · Discovery</small></article>
+        </div>
+        <article class="surface-card verification-card">
+          <div class="section-heading"><div><span class="eyebrow">THE WORKING</span><h2 id="goal">Describe firmware above, then press Generate.</h2></div><span class="mode-pill" id="modePill">REAL</span></div>
+          <div class="pipeline" id="pipeline">
+            <div class="stage" data-stage="intent"><span>01</span><b>Intent</b><small>Your request</small></div>
+            <div class="stage" data-stage="ground"><span>02</span><b>Draft</b><small>Grounded on the datasheet</small></div>
+            <div class="stage" data-stage="compile"><span>03</span><b>Compile</b><small>Real GCC → ELF</small></div>
+            <div class="stage" data-stage="simulate"><span>04</span><b>Simulate</b><small>Renode captures UART</small></div>
+            <div class="stage" data-stage="verified"><span>05</span><b>Verdict</b><small>Proof + boundary</small></div>
+          </div>
+          <div class="reasoning" id="reasoning"><div class="empty-inline">Describe firmware above and press Generate to watch the loop run.</div></div>
+        </article>
+        <article class="surface-card draft-card" id="draftCard" hidden>
+          <div class="section-heading"><div><span class="eyebrow">GENERATED CODE</span><h2>Here is exactly what ran — <span id="draftBy" class="mono">—</span></h2></div><button class="button" id="draftSave"><svg><use href="#i-save"/></svg>Save to workspace</button></div>
+          <pre class="code-review mono" id="draftCode"></pre>
+          <p class="draft-note">This is the exact source that was compiled and simulated above. Your workspace files are unchanged until you Save.</p>
+        </article>
+      </section>
 
-    <!-- CITATIONS -->
-    <section class="panel citations" style="--d:4">
-      <div class="panel-label">GROUNDED ON <span class="count" id="citeCount"></span></div>
-      <ul class="cite-list" id="citeList">
-        <li class="cite-empty mono">no facts yet</li>
-      </ul>
-    </section>
+      <section class="page guide-page" data-page="guide" hidden>
+        <header class="page-header"><div><span class="eyebrow">FIRST RUN</span><h1>Getting started</h1><p>Use Embeder like a small embedded IDE: edit real files, build a real ELF, then inspect the evidence.</p></div><button class="button primary" id="guideBuild"><svg><use href="#i-play"/></svg>Build workspace</button></header>
+        <div class="guide-grid">
+          <article class="surface-card guide-card guide-hero"><span class="guide-number">01</span><div><h2>Edit the workspace</h2><p>Open files from Explorer. Changes stay in memory until you save. <kbd>Ctrl+S</kbd> saves the active file.</p><button class="button" data-guide-page="editor">Open Explorer</button></div></article>
+          <article class="surface-card guide-card"><span class="guide-number">02</span><div><h2>Build the saved sources</h2><p>Build snapshots C, startup, headers, assembly, and the linker script. GCC errors appear in Problems and open the exact file.</p><button class="button" data-guide-build>Build ELF <kbd>Ctrl+Shift+B</kbd></button></div></article>
+          <article class="surface-card guide-card"><span class="guide-number">03</span><div><h2>Run the verification loop</h2><p>Build & Simulate boots the resulting ELF in Renode and checks the USART2 banner. The verdict is based on tool output.</p><button class="button" data-guide-run>Build & Simulate <kbd>Ctrl+Enter</kbd></button></div></article>
+          <article class="surface-card guide-card"><span class="guide-number">04</span><div><h2>Inspect the evidence</h2><p>Use Simulation for UART output and the modeled boundary. Use Datasheet for SVD-backed registers. Use Extensions for MCP health.</p><button class="button" data-guide-page="simulation">Open Simulation</button></div></article>
+        </div>
+        <article class="surface-card shortcut-card"><div class="card-title">Workbench shortcuts</div><div class="shortcut-grid"><span><kbd>Ctrl+P</kbd> Command palette</span><span><kbd>Ctrl+J</kbd> Toggle terminal</span><span><kbd>Ctrl+1…5</kbd> Main views</span><span><kbd>Ctrl+6</kbd> Getting started</span><span><kbd>Ctrl+Shift+B</kbd> Build ELF</span><span><kbd>Escape</kbd> Close overlays</span></div></article>
+      </section>
 
-    <!-- PROVENANCE -->
-    <section class="panel provenance" style="--d:5">
-      <div class="panel-label">PROVENANCE LEDGER <span class="mono dim">append-only</span></div>
-      <div class="ledger" id="ledger">
-        <div class="ledger-empty mono">no records</div>
-      </div>
-    </section>
-  </main>
+      <section class="page" data-page="datasheet" hidden>
+        <header class="page-header"><div><span class="eyebrow">STRUCTURED GROUNDING</span><h1>Datasheet</h1><p>Register facts from the bundled CMSIS-SVD, never inferred.</p></div><span class="source-pill">stm32f4-mini.svd</span></header>
+        <div class="datasheet-layout">
+          <article class="surface-card peripheral-panel"><div class="card-title">Peripherals <span id="dsCount">0</span></div><div class="peripheral-list" id="periphList"></div></article>
+          <article class="surface-card register-panel"><div class="card-title" id="dsDetailLabel">Select a peripheral</div><div class="register-table" id="regTable"><div class="empty-state">Choose a peripheral to inspect its grounded registers.</div></div></article>
+        </div>
+      </section>
 
-  <footer class="footplate mono">
-    <span>EMBEDER · local-first · BYOK</span>
-    <span id="footArtifact" class="dim"></span>
-    <span class="dim">the model proposes · the toolchain disposes</span>
+      <section class="page" data-page="simulation" hidden>
+        <header class="page-header"><div><span class="eyebrow">INSTRUCTION-LEVEL</span><h1>Simulation</h1><p>Renode output and the exact boundary of what was exercised.</p></div><button class="button" id="pageSimulate"><svg><use href="#i-play"/></svg>Run loop</button></header>
+        <div class="simulation-grid">
+          <article class="surface-card"><div class="card-title">USART2 terminal <span class="live-label">CAPTURE</span></div><pre class="terminal mono" id="simTerm">No simulation run yet.</pre></article>
+          <article class="surface-card"><div class="card-title">Verifiability boundary</div><div class="boundary"><section><h3 class="verified">Verified</h3><div class="chips" id="simVerified"></div></section><section><h3 class="assisted">Stubbed</h3><div class="chips" id="simStubbed"></div></section><section><h3 class="blocked">Not modeled</h3><div class="chips" id="simOos"></div></section></div></article>
+        </div>
+      </section>
+
+      <section class="page" data-page="extensions" hidden>
+        <header class="page-header"><div><span class="eyebrow">LOCAL CAPABILITIES</span><h1>Extensions & MCP</h1><p>Inspect every local tool server, dependency, and sandbox boundary.</p></div><button class="button" id="refreshMcp"><svg><use href="#i-refresh"/></svg>Refresh</button></header>
+        <div class="extension-toolbar"><input id="extensionSearch" type="search" placeholder="Filter MCP servers and tools" aria-label="Filter extensions"/><span id="extensionSummary">Discovering local servers…</span></div>
+        <div class="sandbox-banner"><svg><use href="#i-check"/></svg><div><strong>Application sandbox enforced</strong><span id="sandboxSummary">One isolated stdio process per request. Workspace paths are jailed.</span></div></div>
+        <div class="extension-grid" id="extensionGrid"></div>
+      </section>
+
+      <section class="page" data-page="settings" hidden>
+        <header class="page-header"><div><span class="eyebrow">WORKBENCH</span><h1>Settings</h1><p>Toolchains, editor behavior, and security boundaries for this device.</p></div></header>
+        <div class="settings-grid">
+          <article class="surface-card"><div class="card-title">Toolchains</div><div class="setting-list" id="toolchains"></div></article>
+          <article class="surface-card"><div class="card-title">Security policy</div><div class="policy-list"><div><b>Workspace jail</b><span>firmware/stm32-blink-uart only</span></div><div><b>Worker network</b><span>No network tools exposed</span></div><div><b>Hardware actions</b><span>Explicit approval required</span></div><div><b>Secrets</b><span>Native keychain only</span></div></div></article>
+        </div>
+      </section>
+    </main>
+
+    <aside class="auxiliary">
+      <header class="aux-header"><span>CONTEXT</span><button class="plain-icon" id="toggleAux" title="Collapse context"><svg><use href="#i-close"/></svg></button></header>
+      <div class="aux-content" id="inspBody"><div class="empty-state">Open a file or select a grounded register.</div></div>
+    </aside>
+  </div>
+
+  <section class="bottom-panel" id="bottomPanel">
+    <header class="panel-tabs">
+      <button class="panel-tab active" data-console="build">Build</button>
+      <button class="panel-tab" data-console="mcp">MCP</button>
+      <button class="panel-tab" data-console="problems">Problems <span class="tab-count" id="problemCount">0</span></button>
+      <button class="panel-tab" data-console="provenance">Provenance</button>
+      <span class="panel-spacer"></span>
+      <button class="plain-text" id="clearConsole">Clear</button>
+      <button class="plain-icon" id="togglePanel" title="Toggle panel"><svg><use href="#i-close"/></svg></button>
+    </header>
+    <div class="panel-output mono" data-console="build" id="conBuild"></div>
+    <div class="panel-output mono" data-console="mcp" id="conMcp" hidden></div>
+    <div class="panel-output mono" data-console="problems" id="conProblems" hidden></div>
+    <div class="panel-output mono" data-console="provenance" id="conProv" hidden></div>
+  </section>
+
+  <footer class="statusbar mono">
+    <div><span>main*</span><span>↻</span><span id="sbProblems">× 0</span><span>△ 0</span></div>
+    <div><span id="cursorPosition">Ln 1, Col 1</span><span>Spaces: 4</span><span>UTF-8</span><span id="languageMode">C</span><span id="sbMcp"><i class="status-dot checking"></i>MCP checking</span><span>Embeder 0.2</span></div>
   </footer>
 
+  <div class="palette-scrim" id="commandPalette" hidden>
+    <div class="command-palette" role="dialog" aria-modal="true" aria-label="Command palette">
+      <div class="palette-input"><span>›</span><input id="commandInput" placeholder="Type a command" autocomplete="off" /></div>
+      <div class="command-list" id="commandList"></div>
+    </div>
+  </div>
+
+  <div class="toast" id="toast" hidden><span class="status-dot"></span><span id="toastText"></span></div>
   <script src="app.js"></script>
 </body>
 </html>

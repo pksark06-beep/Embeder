@@ -1,22 +1,23 @@
 [package]
 name = "embeder-tauri"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Embeder native desktop shell (ADR-0006). Loads desktop/dist and exposes the Core via a Tauri command."
+description = "Embeder native desktop shell (ADR-0006). Loads desktop/dist and exposes the shared desktop API as Tauri commands."
 # license: TBD — see OD-5
 #
-# NOTE: Tauri's native build on Windows uses the MSVC toolchain + WebView2. This crate
-# is intentionally excluded from the root workspace so its heavy platform deps do not
-# affect the verified `cargo test` build. Build it with an MSVC Rust toolchain:
-#   rustup target add x86_64-pc-windows-msvc   (and install VS Build Tools)
-#   cargo tauri dev   /   cargo tauri build
+# Excluded from the root workspace: Tauri's native build uses WebView2 + the MSVC
+# toolchain. Build with the MSVC Rust toolchain, e.g.:
+#   cargo +stable-x86_64-pc-windows-msvc run --manifest-path desktop/src-tauri/Cargo.toml
 
 [build-dependencies]
 tauri-build = { version = "2", features = [] }
 
 [dependencies]
 tauri = { version = "2", features = [] }
-serde = { version = "1", features = ["derive"] }
 serde_json = "1"
-embeder-core = { path = "../../core" }
-embeder-datasheet = { path = "../../datasheet" }
+embeder-desktop-api = { path = "../api" }
+
+# Keep local native builds practical on machines with limited disk space.
+[profile.dev]
+debug = 0
+incremental = false

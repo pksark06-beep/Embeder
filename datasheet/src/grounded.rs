@@ -35,6 +35,58 @@ impl<'a> GroundedCodegen<'a> {
         v
     }
 
+    /// A human/LLM-readable brief of the authoritative register facts, plus the
+    /// citations for them. This is what grounds a *model*: it is handed the exact
+    /// addresses and bit positions from the SVD so it never has to invent one, and
+    /// the citations that flow into provenance are these SVD facts — not anything the
+    /// model claims. The verification oracles still decide whether the draft is real.
+    pub fn grounding_brief(&self) -> (String, Vec<SourceRef>) {
+        let mut cites = Vec::new();
+        let ahb1 = self.reg(&mut cites, "RCC", "AHB1ENR");
+        let apb1 = self.reg(&mut cites, "RCC", "APB1ENR");
+        let moder = self.reg(&mut cites, "GPIOA", "MODER");
+        let odr = self.reg(&mut cites, "GPIOA", "ODR");
+        let afrl = self.reg(&mut cites, "GPIOA", "AFRL");
+        let sr = self.reg(&mut cites, "USART2", "SR");
+        let dr = self.reg(&mut cites, "USART2", "DR");
+        let brr = self.reg(&mut cites, "USART2", "BRR");
+        let cr1 = self.reg(&mut cites, "USART2", "CR1");
+
+        let bit = |rv: &RegisterView, name: &str| -> u32 {
+            rv.fields.iter().find(|f| f.name == name).map(|f| f.bit_offset).unwrap_or(0)
+        };
+
+        let brief = format!(
+            "Target: STM32F4 (Cortex-M4). Source of truth: {src} (CMSIS-SVD).\n\
+             Use these EXACT register addresses and bit positions verbatim — do not invent any:\n\
+             \x20 RCC_AHB1ENR = {ahb1:#010x}   (bit GPIOAEN  = {gpioaen})  -> enable GPIOA clock\n\
+             \x20 RCC_APB1ENR = {apb1:#010x}   (bit USART2EN = {usart2en}) -> enable USART2 clock\n\
+             \x20 GPIOA_MODER = {moder:#010x}\n\
+             \x20 GPIOA_ODR   = {odr:#010x}\n\
+             \x20 GPIOA_AFRL  = {afrl:#010x}\n\
+             \x20 USART2_SR   = {sr:#010x}   (bit TXE = {txe})\n\
+             \x20 USART2_DR   = {dr:#010x}\n\
+             \x20 USART2_BRR  = {brr:#010x}  (use 0x8B for the discovery board clock)\n\
+             \x20 USART2_CR1  = {cr1:#010x}  (bit UE = {ue}, TE = {te})\n",
+            src = self.idx.source,
+            ahb1 = ahb1.absolute_address,
+            apb1 = apb1.absolute_address,
+            moder = moder.absolute_address,
+            odr = odr.absolute_address,
+            afrl = afrl.absolute_address,
+            sr = sr.absolute_address,
+            dr = dr.absolute_address,
+            brr = brr.absolute_address,
+            cr1 = cr1.absolute_address,
+            gpioaen = bit(&ahb1, "GPIOAEN"),
+            usart2en = bit(&apb1, "USART2EN"),
+            txe = bit(&sr, "TXE"),
+            ue = bit(&cr1, "UE"),
+            te = bit(&cr1, "TE"),
+        );
+        (brief, cites)
+    }
+
     /// Synthesize the firmware source + the citations it is grounded on.
     pub fn synthesize(&self) -> (String, Vec<SourceRef>) {
         let mut cites = Vec::new();

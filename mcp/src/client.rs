@@ -71,7 +71,7 @@ impl McpClient {
     }
 
     fn initialize(&mut self) -> io::Result<()> {
-        self.request(
+        let response = self.request(
             "initialize",
             json!({
                 "protocolVersion": PROTOCOL_VERSION,
@@ -79,7 +79,30 @@ impl McpClient {
                 "clientInfo": {"name": "embeder", "version": "0.1"}
             }),
         )?;
+        if let Some(error) = response.get("error") {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("MCP initialize failed: {error}"),
+            ));
+        }
         self.notify("notifications/initialized")
+    }
+
+    /// Discover tools exposed by the server after the initialization handshake.
+    pub fn list_tools(&mut self) -> io::Result<Vec<Value>> {
+        let response = self.request("tools/list", json!({}))?;
+        if let Some(error) = response.get("error") {
+            return Err(io::Error::new(
+                io::ErrorKind::Other,
+                format!("MCP tools/list failed: {error}"),
+            ));
+        }
+        Ok(response
+            .get("result")
+            .and_then(|result| result.get("tools"))
+            .and_then(Value::as_array)
+            .cloned()
+            .unwrap_or_default())
     }
 
     /// Call a tool and return its (JSON) result payload, unwrapped from the MCP

@@ -1,0 +1,8 @@
+{
+  "name": "embeder-docs",
+  "version": "0.2.0",
+  "private": true,
+  "scripts": {
+    "build": "node scripts/validate.mjs"
+  }
+}

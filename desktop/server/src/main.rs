@@ -1,45 +1,44 @@
-//! Embeder desktop dev server.
+//! Embeder desktop dev server — a thin std-only HTTP layer over the shared desktop
+//! API. Serves `desktop/dist` and exposes:
+//!   GET /api/project · /api/peripherals · /api/register_map?peripheral=NAME
+//!   GET /api/firmware · /api/run · /api/workspace · /api/file
+//!   GET /api/mcp · /api/mcp_probe · POST /api/file
+//!   POST /api/tasks (build/simulate saved sources) · POST /api/generate (model drafts + verifies)
 //!
-//! Serves the static UI (`desktop/dist`) and exposes `GET /api/run`, which drives the
-//! grounded verification loop with fixture oracles (no toolchains needed) and returns
-//! the outcome + provenance as JSON. This is the verifiable stand-in for the Tauri
-//! command layer: the same frontend runs inside the Tauri shell via `invoke`.
+//! The Tauri command layer calls the same `embeder_desktop_api` functions, so the UI
+//! is identical in either host.
 
-use embeder_core::{
-    run_loop, FixtureCompileOracle, FixtureSimOracle, LoopConfig, LoopState, ProvenanceLedger,
-};
-use embeder_datasheet::{DatasheetIndex, GroundedCodegen};
-use serde_json::{json, Value};
-use std::io::{BufRead, BufReader, Write};
+use embeder_desktop_api as api;
+use serde_json::Value;
+use std::io::{BufRead, BufReader, Read, Write};
 use std::net::{TcpListener, TcpStream};
 use std::path::{Path, PathBuf};
 
-fn repo_root() -> PathBuf {
-    // CARGO_MANIFEST_DIR = <root>/desktop/server
+fn dist_dir() -> PathBuf {
     PathBuf::from(env!("CARGO_MANIFEST_DIR"))
         .parent()
-        .and_then(|p| p.parent())
-        .map(|p| p.to_path_buf())
-        .unwrap_or_else(|| PathBuf::from("."))
-}
-
-fn dist_dir() -> PathBuf {
-    repo_root().join("desktop").join("dist")
-}
-
-fn svd_path() -> PathBuf {
-    repo_root().join("datasheet").join("data").join("stm32f4-mini.svd")
+        .map(|p| p.join("dist"))
+        .unwrap_or_else(|| PathBuf::from("dist"))
 }
 
 fn main() {
+    let args: Vec<String> = std::env::args().collect();
+    if let Some(index) = args.iter().position(|argument| argument == "--mcp-server") {
+        let kind = args.get(index + 1).map(String::as_str).unwrap_or("");
+        if let Err(error) = api::serve_mcp_stdio(kind) {
+            eprintln!("MCP worker failed: {error}");
+            std::process::exit(2);
+        }
+        return;
+    }
     let addr = std::env::var("EMBEDER_ADDR").unwrap_or_else(|_| "127.0.0.1:8787".to_string());
     let listener = TcpListener::bind(&addr).unwrap_or_else(|e| {
         eprintln!("cannot bind {addr}: {e}");
         std::process::exit(1);
     });
-    println!("Embeder desktop server → http://{addr}   (serving {})", dist_dir().display());
+    println!("Embeder desktop → http://{addr}   (serving {})", dist_dir().display());
     for stream in listener.incoming().flatten() {
-        handle(stream);
+        std::thread::spawn(move || handle(stream));
     }
 }
 
@@ -53,29 +52,90 @@ fn handle(mut stream: TcpStream) {
     if reader.read_line(&mut request_line).unwrap_or(0) == 0 {
         return;
     }
-    // Drain headers.
+    let mut content_length = 0usize;
     loop {
         let mut line = String::new();
         let n = reader.read_line(&mut line).unwrap_or(0);
         if n == 0 || line == "\r\n" || line == "\n" {
             break;
         }
+        if let Some((name, value)) = line.split_once(':') {
+            if name.eq_ignore_ascii_case("content-length") {
+                content_length = value.trim().parse().unwrap_or(0);
+            }
+        }
     }
 
-    let parts: Vec<&str> = request_line.split_whitespace().collect();
-    let path = parts.get(1).copied().unwrap_or("/");
-
-    if path.starts_with("/api/run") {
-        let body = run_verification().to_string();
-        respond(&mut stream, "200 OK", "application/json; charset=utf-8", body.as_bytes());
-    } else {
-        serve_static(path, &mut stream);
+    if content_length > 512 * 1024 {
+        respond(&mut stream, "413 Payload Too Large", "text/plain", b"request too large");
+        return;
     }
+    let mut body = vec![0u8; content_length];
+    if content_length > 0 && reader.read_exact(&mut body).is_err() {
+        respond(&mut stream, "400 Bad Request", "text/plain", b"incomplete body");
+        return;
+    }
+
+    let mut request_parts = request_line.split_whitespace();
+    let method = request_parts.next().unwrap_or("GET");
+    let path = request_parts.next().unwrap_or("/");
+    let (route, query) = path.split_once('?').unwrap_or((path, ""));
+    let path_param = query_param(query, "path");
+    let server_param = query_param(query, "server");
+    let peripheral_param = query_param(query, "peripheral");
+
+    match (method, route) {
+        ("GET", "/api/project") => json_ok(&mut stream, api::project_info()),
+        ("GET", "/api/peripherals") => json_ok(&mut stream, api::peripherals()),
+        ("GET", "/api/register_map") => {
+            json_ok(&mut stream, api::register_map(peripheral_param.as_deref()))
+        }
+        ("GET", "/api/firmware") => json_ok(&mut stream, api::firmware()),
+        ("GET", "/api/workspace") => json_ok(&mut stream, api::workspace_files()),
+        ("GET", "/api/file") => json_ok(&mut stream, api::read_workspace_file(path_param.as_deref())),
+        ("POST", "/api/file") => json_ok(
+            &mut stream,
+            api::save_workspace_file(path_param.as_deref(), &String::from_utf8_lossy(&body)),
+        ),
+        ("GET", "/api/mcp") => json_ok(&mut stream, api::mcp_status()),
+        ("GET", "/api/mcp_probe") => json_ok(&mut stream, api::probe_mcp(server_param.as_deref())),
+        ("POST", "/api/tasks") => json_ok(&mut stream, api::start_task(query_param(query, "simulate").as_deref() != Some("false"))),
+        ("POST", "/api/generate") => json_ok(&mut stream, api::start_generate_task(String::from_utf8_lossy(&body).into_owned())),
+        ("GET", "/api/task") => json_ok(&mut stream, api::task_status(&query_param(query, "id").unwrap_or_default())),
+        ("POST", "/api/run") => json_ok(&mut stream, api::run_verification()),
+        ("GET", _) => serve_static(route, &mut stream),
+        _ => respond(&mut stream, "405 Method Not Allowed", "text/plain", b"method not allowed"),
+    }
+}
+
+fn query_param(query: &str, key: &str) -> Option<String> {
+    query.split('&').find_map(|kv| {
+        let (k, v) = kv.split_once('=')?;
+        (k == key).then(|| percent_decode(v))
+    })
+}
+
+fn percent_decode(value: &str) -> String {
+    let bytes = value.as_bytes();
+    let mut output = Vec::with_capacity(bytes.len());
+    let mut index = 0;
+    while index < bytes.len() {
+        if bytes[index] == b'%' && index + 2 < bytes.len() {
+            let hex = &value[index + 1..index + 3];
+            if let Ok(byte) = u8::from_str_radix(hex, 16) {
+                output.push(byte);
+                index += 3;
+                continue;
+            }
+        }
+        output.push(if bytes[index] == b'+' { b' ' } else { bytes[index] });
+        index += 1;
+    }
+    String::from_utf8_lossy(&output).into_owned()
 }
 
 fn serve_static(path: &str, stream: &mut TcpStream) {
     let rel = if path == "/" { "index.html" } else { path.trim_start_matches('/') };
-    // Prevent path traversal.
     if rel.contains("..") {
         respond(stream, "400 Bad Request", "text/plain", b"bad path");
         return;
@@ -94,9 +154,15 @@ fn content_type(path: &Path) -> &'static str {
         Some("js") => "text/javascript; charset=utf-8",
         Some("json") => "application/json; charset=utf-8",
         Some("svg") => "image/svg+xml",
+        Some("png") => "image/png",
+        Some("ico") => "image/x-icon",
         Some("woff2") => "font/woff2",
         _ => "application/octet-stream",
     }
+}
+
+fn json_ok(stream: &mut TcpStream, v: Value) {
+    respond(stream, "200 OK", "application/json; charset=utf-8", v.to_string().as_bytes());
 }
 
 fn respond(stream: &mut TcpStream, status: &str, content_type: &str, body: &[u8]) {
@@ -107,72 +173,4 @@ fn respond(stream: &mut TcpStream, status: &str, content_type: &str, body: &[u8]
     let _ = stream.write_all(header.as_bytes());
     let _ = stream.write_all(body);
     let _ = stream.flush();
-}
-
-/// Run the grounded verification loop with fixture oracles and serialize the result.
-fn run_verification() -> Value {
-    let idx = match DatasheetIndex::from_svd_file(svd_path()) {
-        Ok(i) => i,
-        Err(e) => return json!({"error": format!("cannot load SVD: {e}")}),
-    };
-    let mut codegen = GroundedCodegen::new(&idx);
-    let ledger_path = std::env::temp_dir().join("embeder-desktop-prov.jsonl");
-    let _ = std::fs::remove_file(&ledger_path);
-    let mut ledger = match ProvenanceLedger::new(&ledger_path) {
-        Ok(l) => l,
-        Err(e) => return json!({"error": format!("ledger: {e}")}),
-    };
-
-    let outcome = run_loop(
-        "Blink an LED and print over UART on STM32",
-        &mut codegen,
-        &FixtureCompileOracle,
-        &FixtureSimOracle,
-        &mut ledger,
-        &LoopConfig::default(),
-    );
-
-    let tier = outcome.tier.map(|t| json!({"symbol": t.symbol(), "name": t.as_str()}));
-    let boundary = outcome.boundary.as_ref().map(|b| {
-        json!({"verified": b.verified, "stubbed": b.stubbed, "not_modeled": b.not_modeled})
-    });
-    let citations: Vec<Value> = outcome
-        .citations
-        .iter()
-        .map(|c| json!({"source": c.source, "locator": c.locator, "summary": c.summary}))
-        .collect();
-    let observations: Vec<Value> = outcome
-        .observations
-        .iter()
-        .map(|(k, v)| json!({"key": k, "value": v}))
-        .collect();
-    let provenance: Vec<Value> = ledger
-        .records
-        .iter()
-        .map(|r| {
-            json!({
-                "id": r.id, "ts": r.ts, "actor": r.actor, "tool": r.tool,
-                "tier": r.tier, "oracle": r.oracle_version,
-                "inputs_hash": r.inputs_hash, "outputs_hash": r.outputs_hash
-            })
-        })
-        .collect();
-
-    json!({
-        "goal": "Blink an LED and print over UART on STM32",
-        "state": match outcome.state {
-            LoopState::Verified => "verified",
-            LoopState::Halted => "halted",
-            LoopState::Built => "built",
-            LoopState::Draft => "draft",
-        },
-        "tier": tier,
-        "attempts": outcome.attempts,
-        "self_healed": outcome.attempts > 1,
-        "boundary": boundary,
-        "citations": citations,
-        "observations": observations,
-        "artifact": outcome.artifact_path,
-        "provenance": provenance,
-    })
 }

@@ -7,6 +7,9 @@ description = "MCP client bridge (ADR-0001): the Rust Core talks to local MCP to
 
 [dependencies]
 embeder-core = { path = "../core" }
+# The datasheet layer supplies the grounded facts + fallback for the LLM codegen
+# demo binary (src/bin/llm_loop.rs). The library itself stays datasheet-agnostic.
+embeder-datasheet = { path = "../datasheet" }
 # JSON (de)serialization for the JSON-RPC wire protocol. Isolated to this crate.
 serde_json = "1"
 

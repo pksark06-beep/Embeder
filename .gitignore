@@ -9,10 +9,18 @@ venv/
 # Rust (workspace target at repo root)
 /target/
 /core/target/
+/desktop/src-tauri/target/
+/desktop/src-tauri/gen/
 
 # Embeder runtime
 .embeder/
 embeder-workspace/**/simulation/*.log
+
+# Secrets — BYOK LLM keys never get committed
+.env
+.env.*
+!.env.example
+**/.env.local
 
 # Toolchain/build artifacts
 *.elf

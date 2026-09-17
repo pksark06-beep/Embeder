@@ -1,14 +1,16 @@
 [package]
 name = "embeder-desktop"
-version = "0.1.0"
+version = "0.2.0"
 edition = "2021"
-description = "Embeder desktop dev server: serves the UI and runs the verification loop behind a tiny std-only HTTP API. Verifiable stand-in for the Tauri command layer (ADR-0006)."
+description = "Embeder desktop dev server: serves the UI and exposes the shared desktop API over a tiny std-only HTTP layer (ADR-0006)."
 # license: TBD — see OD-5
 
 [dependencies]
-embeder-core = { path = "../../core" }
-embeder-datasheet = { path = "../../datasheet" }
+embeder-desktop-api = { path = "../api" }
 serde_json = "1"
+
+[dev-dependencies]
+embeder-mcp = { path = "../../mcp" }
 
 [[bin]]
 name = "embeder-desktop"

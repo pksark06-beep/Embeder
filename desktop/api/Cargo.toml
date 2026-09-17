@@ -1,0 +1,16 @@
+[package]
+name = "embeder-desktop-api"
+version = "0.1.0"
+edition = "2021"
+description = "Shared desktop API: turns the Core into JSON views. Used by both the dev server and the Tauri command layer (one source of truth)."
+# license: TBD — see OD-5
+
+[dependencies]
+embeder-core = { path = "../../core" }
+embeder-datasheet = { path = "../../datasheet" }
+embeder-mcp = { path = "../../mcp" }
+serde_json = "1"
+
+[lib]
+name = "embeder_desktop_api"
+path = "src/lib.rs"
