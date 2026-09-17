@@ -5,280 +5,304 @@
     <meta name="viewport" content="width=device-width, initial-scale=1" />
     <meta name="color-scheme" content="dark light" />
     <link rel="canonical" href="https://embeder-docs.vercel.app/" />
+    <meta property="og:type" content="website" />
     <meta property="og:title" content="Embeder — verified firmware, from intent to evidence" />
-    <meta property="og:description" content="Ground firmware in datasheet facts, compile it with a real ARM toolchain, and verify it in simulation." />
+    <meta property="og:description" content="Describe firmware in plain words. A model drafts it, a real ARM toolchain compiles it, Renode boots it — and Embeder shows you the proof." />
     <meta property="og:url" content="https://embeder-docs.vercel.app/" />
+    <meta property="og:image" content="https://embeder-docs.vercel.app/img/app-build-verified.png" />
+    <meta name="twitter:card" content="summary_large_image" />
     <meta
       name="description"
-      content="Embeder is an open-source embedded engineering workbench that grounds generated firmware in compilation and simulation evidence."
+      content="Embeder is an open-source embedded engineering workbench that grounds generated firmware in datasheet facts, then proves it with real compilation and simulation."
     />
     <title>Embeder — verified firmware, from intent to evidence</title>
+    <link rel="icon" href="./favicon.ico" sizes="any" />
     <link rel="icon" href="./favicon.png" type="image/png" />
+    <link rel="apple-touch-icon" href="./favicon.png" />
+    <link rel="preload" href="./fonts/Geist.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./fonts/GeistMono.woff2" as="font" type="font/woff2" crossorigin />
+    <link rel="preload" href="./img/app-build-verified.png" as="image" />
     <link rel="stylesheet" href="./styles.css" />
     <script src="./app.js" defer></script>
   </head>
   <body>
     <a class="skip-link" href="#content">Skip to content</a>
 
-    <header class="topbar">
-      <a class="brand" href="#top" aria-label="Embeder home">
-        <span class="brand-mark" aria-hidden="true">E</span>
+    <svg width="0" height="0" style="position:absolute" aria-hidden="true">
+      <defs>
+        <symbol id="i-check" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m5 12 4 4L19 6"/></symbol>
+        <symbol id="i-arrow" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M5 12h14M13 6l6 6-6 6"/></symbol>
+        <symbol id="i-chip" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="6" y="6" width="12" height="12" rx="1"/><path d="M9 2v4m3-4v4m3-4v4M9 18v4m3-4v4m3-4v4M2 9h4m-4 3h4m-4 3h4m12-6h4m-4 3h4m-4 3h4"/></symbol>
+        <symbol id="i-wave" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="M3 12h3l2-6 4 12 3-9 2 3h4"/></symbol>
+        <symbol id="i-blocks" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><rect x="4" y="4" width="6" height="6" rx="1"/><rect x="14" y="4" width="6" height="6" rx="1"/><rect x="4" y="14" width="6" height="6" rx="1"/><path d="M17 14v6m-3-3h6"/></symbol>
+        <symbol id="i-shield" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 3 5 6v6c0 4 3 6.5 7 9 4-2.5 7-5 7-9V6z"/><path d="m9 12 2 2 4-4"/></symbol>
+        <symbol id="i-terminal" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="16" rx="2"/><path d="m7 9 3 3-3 3m6 0h4"/></symbol>
+        <symbol id="i-code" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round"><path d="m8 6-6 6 6 6m8-12 6 6-6 6"/></symbol>
+      </defs>
+    </svg>
+
+    <header class="topbar" id="topbar">
+      <a class="brand" href="/" aria-label="Embeder home">
+        <img class="brand-logo" src="./img/logo.png" width="28" height="28" alt="" aria-hidden="true" />
         <span>Embeder</span>
         <span class="version">v0.2.0</span>
       </a>
-      <nav class="topnav" aria-label="Primary navigation">
-        <a href="#workflow">Workflow</a>
-        <a href="#quickstart">Docs</a>
-        <a href="#architecture">Architecture</a>
-        <a href="https://buymeacoffee.com/sekweb" target="_blank" rel="noreferrer">Support</a>
+      <nav class="topnav" aria-label="Primary">
+        <a href="#how">How it works</a>
+        <a href="#features">Features</a>
+        <a href="#trust">Confidence</a>
+        <a href="/docs">Docs</a>
         <a href="https://github.com/pksark06-beep/Embeder" target="_blank" rel="noreferrer">GitHub</a>
       </nav>
-      <button class="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme">
-        <span aria-hidden="true">◐</span>
-      </button>
+      <div class="top-actions">
+        <a class="ghost-link" href="https://buymeacoffee.com/sekweb" target="_blank" rel="noreferrer">Support</a>
+        <a class="button primary small" href="https://github.com/pksark06-beep/Embeder/releases/latest">Download</a>
+        <button class="theme-toggle" type="button" aria-label="Switch color theme" title="Switch color theme"><span aria-hidden="true">◐</span></button>
+      </div>
     </header>
 
     <main id="content">
+      <!-- HERO -->
       <section class="hero" id="top">
-        <div class="hero-grid" aria-hidden="true"></div>
-        <div class="eyebrow"><span class="status-dot"></span> Open-source embedded engineering workbench</div>
-        <h1>Firmware should<br />prove itself.</h1>
-        <p class="hero-copy">
-          Embeder turns a firmware goal into grounded source, compiles it with a real ARM toolchain,
-          boots it in Renode, and records the evidence. The model drafts. Deterministic oracles decide.
-        </p>
-        <div class="hero-actions">
-          <a class="button primary" href="https://github.com/pksark06-beep/Embeder/releases/latest/download/Embeder_0.2.0_x64-setup.exe">
-            Download for Windows <span aria-hidden="true">↓</span>
-          </a>
-          <a class="button secondary" href="https://github.com/pksark06-beep/Embeder" target="_blank" rel="noreferrer">
-            View source <span aria-hidden="true">↗</span>
-          </a>
-        </div>
-        <p class="platform-note">Windows 10/11 · x64 · source builds available</p>
-      </section>
-
-      <section class="signal-strip" id="workflow" aria-label="Verification workflow">
-        <div class="signal-step"><span>01</span><strong>Intent</strong><small>Define the target behavior</small></div>
-        <div class="signal-connector" aria-hidden="true"></div>
-        <div class="signal-step"><span>02</span><strong>Ground</strong><small>Resolve cited register facts</small></div>
-        <div class="signal-connector" aria-hidden="true"></div>
-        <div class="signal-step"><span>03</span><strong>Compile</strong><small>Run arm-none-eabi-gcc</small></div>
-        <div class="signal-connector" aria-hidden="true"></div>
-        <div class="signal-step"><span>04</span><strong>Simulate</strong><small>Assert behavior in Renode</small></div>
-        <div class="signal-connector" aria-hidden="true"></div>
-        <div class="signal-step verified"><span>05</span><strong>Verified</strong><small>Ship evidence, not confidence</small></div>
-      </section>
-
-      <section class="feature-intro">
-        <div>
-          <p class="section-kicker">Closed-loop by design</p>
-          <h2>The LLM never certifies its own output.</h2>
-        </div>
-        <p>
-          Every draft crosses a verifiability boundary. Compiler diagnostics can drive a bounded repair loop;
-          only a successful build and simulation promote the result to verified.
-        </p>
-      </section>
-
-      <section class="feature-grid" aria-label="Core capabilities">
-        <article class="feature-card">
-          <div class="card-index">01 / Grounding</div>
-          <h3>Datasheet facts, not guesses</h3>
-          <p>Register addresses come from bundled CMSIS-SVD data and travel with source citations.</p>
-          <div class="mini-code" aria-hidden="true">
-            <span><i>USART2.CR1</i><b>0x4000440C</b></span>
-            <span><i>source</i><b>stm32f4-mini.svd</b></span>
+        <div class="grid-bg" aria-hidden="true"></div>
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="wrap">
+          <span class="eyebrow"><span class="status-dot"></span> Open-source embedded workbench · BYOK</span>
+          <h1>Firmware that <span class="grad">proves itself.</span></h1>
+          <p class="hero-copy">
+            Describe what you want in plain words. A model drafts the firmware, a real ARM
+            toolchain compiles it, Renode boots it — and Embeder shows you the evidence.
+            The model drafts. Deterministic oracles decide.
+          </p>
+          <div class="hero-actions">
+            <a class="button primary" href="https://github.com/pksark06-beep/Embeder/releases/latest/download/Embeder_0.2.0_x64-setup.exe">
+              Download for Windows <span aria-hidden="true">↓</span>
+            </a>
+            <a class="button secondary" href="/docs">Read the docs <svg width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg></a>
           </div>
-        </article>
-        <article class="feature-card">
-          <div class="card-index">02 / Build</div>
-          <h3>Real compiler diagnostics</h3>
-          <p>Embeder invokes the ARM GNU toolchain and maps errors back into the editable workspace.</p>
-          <div class="terminal-sample" aria-hidden="true">
-            <span class="terminal-label">BUILD</span>
-            <code><em>✓</em> firmware.elf · Cortex-M4</code>
+          <p class="platform-note"><b>Windows 10/11 · x64</b> — source builds available · no telemetry</p>
+
+          <div class="hero-visual reveal">
+            <figure class="app-frame" aria-label="Embeder desktop app showing a verified firmware build">
+              <div class="app-titlebar" aria-hidden="true">
+                <span class="app-dots"><i></i><i></i><i></i></span>
+                <span class="app-addr mono">stm32-blink-uart — Embeder</span>
+              </div>
+              <img src="./img/app-build-verified.png" width="1500" height="940"
+                   alt="The Embeder workbench with a completed verification: pipeline stages done, verdict ✓ Verified, real Renode console output, MCP 3/3 online." />
+            </figure>
           </div>
-        </article>
-        <article class="feature-card">
-          <div class="card-index">03 / Evidence</div>
-          <h3>Simulation closes the loop</h3>
-          <p>Renode boots the ELF, observes USART2, and records what was—and was not—verified.</p>
-          <div class="terminal-sample" aria-hidden="true">
-            <span class="terminal-label">UART</span>
-            <code><em>✓</em> Hello from Embeder</code>
-          </div>
-        </article>
-      </section>
-
-      <section class="docs-shell" id="quickstart">
-        <aside class="docs-sidebar" aria-label="Documentation sections">
-          <p>Documentation</p>
-          <a href="#install" class="active">Install</a>
-          <a href="#toolchain">Toolchain</a>
-          <a href="#first-build">First build</a>
-          <a href="#byok">Model providers</a>
-          <a href="#source-build">Build from source</a>
-          <a href="#architecture">Architecture</a>
-          <a href="#security">Security model</a>
-          <a href="#contributing">Contributing</a>
-        </aside>
-
-        <div class="docs-content">
-          <div class="docs-heading">
-            <p class="section-kicker">Documentation</p>
-            <h2>From installer to verified firmware.</h2>
-            <p>The desktop shell installs in one pass. Add the compiler and simulator when you are ready to run the real verification path.</p>
-          </div>
-
-          <article class="doc-section" id="install">
-            <div class="doc-number">01</div>
-            <div>
-              <h3>Install Embeder</h3>
-              <p>Download the current Windows x64 setup from the official GitHub release and run it. Embeder installs for the current user and creates a sandboxed starter workspace on first launch.</p>
-              <div class="callout">
-                <strong>Release integrity</strong>
-                <p>Verify the installer before running it if your browser marks the unsigned community build as unfamiliar.</p>
-                <code>SHA-256  6E1CBEF44BEF8DAC29F943E31A77E72E7AFFAEECBFF452EE9FC1067323858540</code>
-              </div>
-              <a class="text-link" href="https://github.com/pksark06-beep/Embeder/releases/latest">Open the latest release <span>↗</span></a>
-            </div>
-          </article>
-
-          <article class="doc-section" id="toolchain">
-            <div class="doc-number">02</div>
-            <div>
-              <h3>Add the verification toolchain</h3>
-              <p>The editor and grounded datasheet views work immediately. The real build path expects the following developer tools:</p>
-              <div class="requirements">
-                <a href="https://developer.arm.com/downloads/-/arm-gnu-toolchain-downloads" target="_blank" rel="noreferrer">
-                  <span><strong>Arm GNU Toolchain</strong><small>Required for Build</small></span><b>arm-none-eabi-gcc ↗</b>
-                </a>
-                <a href="https://github.com/renode/renode/releases" target="_blank" rel="noreferrer">
-                  <span><strong>Renode</strong><small>Required for Build &amp; Simulate</small></span><b>1.16.x ↗</b>
-                </a>
-                <a href="https://www.python.org/downloads/windows/" target="_blank" rel="noreferrer">
-                  <span><strong>Python 3</strong><small>Optional for model-backed generation</small></span><b>3.12+ ↗</b>
-                </a>
-              </div>
-              <p class="muted">Validated baseline: Arm GNU 12.2.1 and Renode 1.16.x. Newer versions should be treated as unverified until the real integration suite passes.</p>
-            </div>
-          </article>
-
-          <article class="doc-section" id="first-build">
-            <div class="doc-number">03</div>
-            <div>
-              <h3>Run your first closed loop</h3>
-              <ol class="steps">
-                <li><span>1</span><p>Open the bundled <code>stm32-blink-uart</code> workspace.</p></li>
-                <li><span>2</span><p>Edit and save <code>src/main.c</code>.</p></li>
-                <li><span>3</span><p>Choose <strong>Build</strong> for a real ELF, or <strong>Build &amp; Simulate</strong> for the UART assertion.</p></li>
-                <li><span>4</span><p>Inspect diagnostics, evidence, citations and the verifiability boundary.</p></li>
-              </ol>
-            </div>
-          </article>
-
-          <article class="doc-section" id="byok">
-            <div class="doc-number">04</div>
-            <div>
-              <h3>Bring your own model</h3>
-              <p>Embeder auto-detects a supported provider from the environment. With no key, generation falls back to deterministic grounded synthesis.</p>
-              <div class="code-block">
-                <div class="code-title"><span>PowerShell</span><button type="button" class="copy-button" data-copy="byok-code">Copy</button></div>
-                <pre id="byok-code"><code>$env:GEMINI_API_KEY = "..."
-# or
-$env:OPENAI_API_KEY = "..."
-# or
-$env:AI_GATEWAY_API_KEY = "..."</code></pre>
-              </div>
-              <p class="muted">Keys stay local to the process. Generated drafts remain proposals until the deterministic build and simulation stages pass.</p>
-            </div>
-          </article>
-
-          <article class="doc-section" id="source-build">
-            <div class="doc-number">05</div>
-            <div>
-              <h3>Build from source</h3>
-              <p>Contributors need Git, Rust with the MSVC target, Visual Studio C++ Build Tools, and Tauri CLI v2.</p>
-              <div class="code-block">
-                <div class="code-title"><span>PowerShell</span><button type="button" class="copy-button" data-copy="source-code">Copy</button></div>
-                <pre id="source-code"><code>git clone https://github.com/pksark06-beep/Embeder.git
-cd Embeder
-
-rustup toolchain install stable-x86_64-pc-windows-msvc
-cargo install tauri-cli --version "^2" --locked
-cargo test --workspace
-
-cd desktop/src-tauri
-cargo +stable-x86_64-pc-windows-msvc tauri build \
-  --target x86_64-pc-windows-msvc</code></pre>
-              </div>
-            </div>
-          </article>
-
-          <article class="doc-section" id="architecture">
-            <div class="doc-number">06</div>
-            <div>
-              <h3>Architecture</h3>
-              <p>The renderer never decides verification state. A shared Rust API owns workspace access and launches short-lived, path-jailed MCP workers over stdio JSON-RPC.</p>
-              <div class="architecture-map" role="img" aria-label="Embeder architecture from workbench through Rust API and MCP workers to external oracles">
-                <div class="arch-node accent"><small>Presentation</small><strong>Tauri workbench</strong><span>HTML · CSS · JavaScript</span></div>
-                <div class="arch-arrow" aria-hidden="true">↓ invoke</div>
-                <div class="arch-node"><small>Application</small><strong>Shared Rust API</strong><span>Tasks · workspace · evidence</span></div>
-                <div class="arch-arrow" aria-hidden="true">↓ stdio MCP</div>
-                <div class="arch-row">
-                  <div class="arch-node"><small>Worker</small><strong>Datasheet</strong><span>CMSIS-SVD</span></div>
-                  <div class="arch-node"><small>Worker</small><strong>Firmware</strong><span>ARM GCC</span></div>
-                  <div class="arch-node"><small>Worker</small><strong>Simulation</strong><span>Renode</span></div>
-                </div>
-              </div>
-            </div>
-          </article>
-
-          <article class="doc-section" id="security">
-            <div class="doc-number">07</div>
-            <div>
-              <h3>Security model</h3>
-              <ul class="plain-list">
-                <li>Workspace file access is restricted to the seeded firmware project.</li>
-                <li>Generated builds run in unique temporary directories.</li>
-                <li>MCP workers expose a fixed tool catalog and reject traversal.</li>
-                <li>Model output cannot mark itself verified.</li>
-                <li>Process isolation is application-level, not an operating-system sandbox.</li>
-              </ul>
-            </div>
-          </article>
-
-          <article class="doc-section" id="contributing">
-            <div class="doc-number">08</div>
-            <div>
-              <h3>Contributing</h3>
-              <p>Start with the system specification and architecture decisions, keep the deterministic boundary intact, and add tests for any new oracle or workspace capability.</p>
-              <div class="contribute-links">
-                <a href="https://github.com/pksark06-beep/Embeder/issues" target="_blank" rel="noreferrer">Open an issue <span>↗</span></a>
-                <a href="https://github.com/pksark06-beep/Embeder/pulls" target="_blank" rel="noreferrer">Review pull requests <span>↗</span></a>
-              </div>
-            </div>
-          </article>
         </div>
       </section>
 
-      <section class="final-cta">
-        <p class="section-kicker">Build in the open</p>
-        <h2>Make firmware claims reproducible.</h2>
-        <p>Read the code, run the oracles, challenge the boundary, and help extend Embeder beyond STM32F4.</p>
-        <div class="hero-actions">
-          <a class="button primary" href="https://github.com/pksark06-beep/Embeder">Explore the repository <span>↗</span></a>
-          <a class="button secondary" href="https://github.com/pksark06-beep/Embeder/releases/latest">Download v0.2.0</a>
-          <a class="button secondary" href="https://buymeacoffee.com/sekweb" target="_blank" rel="noreferrer">Support the project <span>↗</span></a>
+      <!-- STATS -->
+      <section class="stats" id="trust-stats" aria-label="At a glance">
+        <div class="wrap">
+          <div class="stat"><b>5.0<span class="unit">s</span></b><span>Real compile + Renode run, end to end</span></div>
+          <div class="stat"><b>0</b><span>Fabricated register addresses — SVD-grounded</span></div>
+          <div class="stat"><b>3 / 3</b><span>MCP tool servers, isolated over stdio</span></div>
+          <div class="stat"><b>100<span class="unit">%</span></b><span>Verdicts backed by tool output, not vibes</span></div>
+        </div>
+      </section>
+
+      <!-- HOW IT WORKS -->
+      <section class="band" id="how">
+        <div class="wrap">
+          <div class="band-head center reveal">
+            <span class="section-kicker">Closed-loop by design</span>
+            <h2 class="section-title">The LLM never certifies its own output.</h2>
+            <p class="section-lead">Every draft crosses a verifiability boundary. Compiler diagnostics drive a bounded repair loop; only a real build and a real simulation can promote a result to verified.</p>
+          </div>
+          <div class="signal-strip reveal">
+            <div class="signal-step"><span>01</span><strong>Intent</strong><small>Describe the target behavior in plain words</small></div>
+            <div class="signal-step"><span>02</span><strong>Ground</strong><small>Resolve cited register facts from CMSIS-SVD</small></div>
+            <div class="signal-step"><span>03</span><strong>Compile</strong><small>Run arm-none-eabi-gcc for a real ELF</small></div>
+            <div class="signal-step"><span>04</span><strong>Simulate</strong><small>Boot in Renode and capture UART</small></div>
+            <div class="signal-step verified"><span>05</span><strong>Verified</strong><small>Ship evidence, not confidence</small><svg class="tick" width="18" height="18" aria-hidden="true"><use href="#i-check"/></svg></div>
+          </div>
+        </div>
+      </section>
+
+      <!-- FEATURE ROWS -->
+      <section class="band" id="features">
+        <div class="wrap">
+          <div class="band-head reveal">
+            <span class="section-kicker">Inside the workbench</span>
+            <h2 class="section-title">Every claim, traceable to a tool.</h2>
+          </div>
+
+          <div style="margin-top:3.5rem">
+            <!-- Grounding -->
+            <div class="feature-row reveal">
+              <div class="feature-body">
+                <span class="eyebrow">Grounding</span>
+                <h3>Datasheet facts, not guesses.</h3>
+                <p>Register addresses come straight from bundled CMSIS-SVD data and travel with a source citation. A miss is refused — never silently replaced with a model guess.</p>
+                <ul class="feature-points">
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Structured-first.</b> USART2, GPIOA and RCC resolved to exact addresses like <code class="mono">0x40004400</code>.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Cited by construction.</b> Every fact points back to <code class="mono">stm32f4-mini.svd</code>.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Confidence-tiered.</b> Verified, assisted, advisory, or out-of-scope — never blurred.</span></li>
+                </ul>
+                <div class="feature-cta"><a class="text-link" href="/docs#byok">Bring your own model <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+              </div>
+              <div class="feature-media">
+                <figure class="app-frame">
+                  <div class="app-titlebar" aria-hidden="true"><span class="app-dots"><i></i><i></i><i></i></span><span class="app-addr mono">Datasheet — grounded registers</span></div>
+                  <img src="./img/app-datasheet.png" width="1500" height="940" loading="lazy" alt="Embeder Datasheet view: USART2 register map from CMSIS-SVD with exact addresses and fields, marked verified." />
+                </figure>
+              </div>
+            </div>
+
+            <!-- Evidence / simulation -->
+            <div class="feature-row reverse reveal">
+              <div class="feature-body">
+                <span class="eyebrow">Evidence</span>
+                <h3>Simulation closes the loop.</h3>
+                <p>Renode boots the real ELF, observes USART2, and records exactly what was — and was not — exercised. The boundary is explicit, so you always know the limits of the proof.</p>
+                <ul class="feature-points">
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Real capture.</b> <code class="mono">uart: Hello from Embeder</code> — 100 bytes, asserted.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Honest boundary.</b> CPU boot and UART TX verified; analog and RF flagged not-modeled.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Provenance ledger.</b> Ground → compile → simulate → verify, recorded per run.</span></li>
+                </ul>
+                <div class="feature-cta"><a class="text-link" href="/docs#first-build">Run your first loop <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+              </div>
+              <div class="feature-media">
+                <figure class="app-frame">
+                  <div class="app-titlebar" aria-hidden="true"><span class="app-dots"><i></i><i></i><i></i></span><span class="app-addr mono">Simulation — UART + boundary</span></div>
+                  <img src="./img/app-simulation.png" width="1500" height="940" loading="lazy" alt="Embeder Simulation view: USART2 terminal showing 'Hello from Embeder' and a verifiability boundary of verified, stubbed, and not-modeled items." />
+                </figure>
+              </div>
+            </div>
+
+            <!-- Editor -->
+            <div class="feature-row reveal">
+              <div class="feature-body">
+                <span class="eyebrow">Author &amp; review</span>
+                <h3>A real editor, not a black box.</h3>
+                <p>Edit register-level C in a familiar workbench. Generated drafts land as an unsaved buffer you can read line-by-line before anything touches disk — the app is a transparency surface, not an autopilot.</p>
+                <ul class="feature-points">
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Workspace-jailed.</b> File access is restricted to the seeded firmware project.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Diagnostics that navigate.</b> GCC errors open the exact file and line.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Review before save.</b> The model proposes; you decide what ships.</span></li>
+                </ul>
+                <div class="feature-cta"><a class="text-link" href="/docs#first-build">See the workflow <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+              </div>
+              <div class="feature-media">
+                <figure class="app-frame">
+                  <div class="app-titlebar" aria-hidden="true"><span class="app-dots"><i></i><i></i><i></i></span><span class="app-addr mono">src/main.c — Files</span></div>
+                  <img src="./img/app-editor.png" width="1500" height="940" loading="lazy" alt="Embeder editor showing the real bare-metal STM32F4 main.c with syntax highlighting inside the workspace jail." />
+                </figure>
+              </div>
+            </div>
+
+            <!-- MCP -->
+            <div class="feature-row reverse reveal">
+              <div class="feature-body">
+                <span class="eyebrow">Architecture</span>
+                <h3>Tools isolated behind MCP.</h3>
+                <p>The datasheet, firmware and simulation tools each run as a short-lived, path-jailed MCP worker over stdio JSON-RPC. The renderer never decides verification state — a shared Rust core does.</p>
+                <ul class="feature-points">
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>One process per request.</b> No ambient network, no traversal.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Fixed tool catalog.</b> Datasheet, Firmware and Simulation, each health-checked.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Local-first &amp; BYOK.</b> Your keys stay on your machine.</span></li>
+                </ul>
+                <div class="feature-cta"><a class="text-link" href="/docs#architecture">Read the architecture <svg aria-hidden="true"><use href="#i-arrow"/></svg></a></div>
+              </div>
+              <div class="feature-media">
+                <figure class="app-frame">
+                  <div class="app-titlebar" aria-hidden="true"><span class="app-dots"><i></i><i></i><i></i></span><span class="app-addr mono">Extensions &amp; MCP</span></div>
+                  <img src="./img/app-extensions.png" width="1500" height="940" loading="lazy" alt="Embeder Extensions view: Datasheet, Firmware and Simulation MCP servers online with their tool catalogs and sandbox checks." />
+                </figure>
+              </div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- WHY / BENTO -->
+      <section class="band tight" id="why">
+        <div class="wrap">
+          <div class="band-head reveal">
+            <span class="section-kicker">Why it's different</span>
+            <h2 class="section-title">Built for evidence, from the metal up.</h2>
+          </div>
+          <div class="bento">
+            <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-terminal"/></svg></div><h4>Real toolchains</h4><p>arm-none-eabi-gcc and Renode run for real — not a mocked pipeline. If it says compiled, it compiled.</p></article>
+            <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-chip"/></svg></div><h4>Register-level ground truth</h4><p>CMSIS-SVD is the structured source of truth. Prose gets RAG; addresses do not.</p></article>
+            <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-shield"/></svg></div><h4>Sandboxed by default</h4><p>Path-jailed workers, no network tools, explicit approval for anything that touches hardware.</p></article>
+            <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-code"/></svg></div><h4>Open source</h4><p>Read the code, run the oracles, challenge the boundary. A Rust core with Python MCP servers.</p></article>
+            <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-blocks"/></svg></div><h4>BYOK models</h4><p>Auto-detects Gemini, OpenAI-compatible, or Vercel AI Gateway. No key? Deterministic fallback.</p></article>
+            <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-wave"/></svg></div><h4>Provenance you can audit</h4><p>Every stage writes a record — who drafted, what compiled, what the simulator saw.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <!-- CONFIDENCE TIERS -->
+      <section class="band tight" id="trust">
+        <div class="wrap">
+          <div class="band-head reveal">
+            <span class="section-kicker">Confidence tiers</span>
+            <h2 class="section-title">Nothing is silently promoted.</h2>
+            <p class="section-lead">Every fact and result carries a tier. You always know how much to trust a claim, and why.</p>
+          </div>
+          <div class="tiers">
+            <article class="tier v reveal"><div class="badge">✅</div><h4>Verified</h4><p>Confirmed by a deterministic oracle — a real compile or simulation run.</p></article>
+            <article class="tier reveal"><div class="badge">🟡</div><h4>Assisted</h4><p>Grounded and plausible, but not independently proven end-to-end.</p></article>
+            <article class="tier reveal"><div class="badge">⚠️</div><h4>Advisory</h4><p>Model guidance outside the verifiable boundary — treat as a hint.</p></article>
+            <article class="tier reveal"><div class="badge">⛔</div><h4>Out of scope</h4><p>Refused rather than faked — e.g. RF, wireless, or unmodeled analog.</p></article>
+          </div>
+        </div>
+      </section>
+
+      <!-- FINAL CTA -->
+      <section class="band final-cta">
+        <div class="hero-glow" aria-hidden="true"></div>
+        <div class="wrap reveal">
+          <span class="section-kicker" style="justify-content:center">Build in the open</span>
+          <h2>Make firmware claims reproducible.</h2>
+          <p>Download the workbench, wire in your model, and let deterministic oracles have the final word.</p>
+          <div class="hero-actions">
+            <a class="button primary" href="https://github.com/pksark06-beep/Embeder/releases/latest">Download Embeder <span aria-hidden="true">↓</span></a>
+            <a class="button secondary" href="/docs">Read the docs</a>
+            <a class="button secondary" href="https://github.com/pksark06-beep/Embeder" target="_blank" rel="noreferrer">View source <svg width="16" height="16" aria-hidden="true"><use href="#i-arrow"/></svg></a>
+          </div>
         </div>
       </section>
     </main>
 
-    <footer>
-      <a class="brand" href="#top"><span class="brand-mark" aria-hidden="true">E</span><span>Embeder</span></a>
-      <p>Open-source tools for evidence-driven embedded development.</p>
-      <div><a href="https://github.com/pksark06-beep/Embeder">GitHub</a><a href="#quickstart">Documentation</a><a href="https://buymeacoffee.com/sekweb" target="_blank" rel="noreferrer">Support</a></div>
+    <footer class="site-footer">
+      <div class="wrap">
+        <div class="foot-brand">
+          <a class="brand" href="/"><img class="brand-logo" src="./img/logo.png" width="28" height="28" alt="" aria-hidden="true" /><span>Embeder</span></a>
+          <p>An open-source workbench for evidence-driven embedded development. Ground it, compile it, simulate it — then trust it.</p>
+        </div>
+        <div class="foot-col">
+          <h5>Product</h5>
+          <a href="#how">How it works</a>
+          <a href="#features">Features</a>
+          <a href="#trust">Confidence tiers</a>
+          <a href="https://github.com/pksark06-beep/Embeder/releases/latest">Download</a>
+        </div>
+        <div class="foot-col">
+          <h5>Docs</h5>
+          <a href="/docs#install">Install</a>
+          <a href="/docs#first-build">First build</a>
+          <a href="/docs#byok">Model providers</a>
+          <a href="/docs#architecture">Architecture</a>
+        </div>
+        <div class="foot-col">
+          <h5>Project</h5>
+          <a href="https://github.com/pksark06-beep/Embeder" target="_blank" rel="noreferrer">GitHub</a>
+          <a href="https://github.com/pksark06-beep/Embeder/issues" target="_blank" rel="noreferrer">Issues</a>
+          <a href="https://buymeacoffee.com/sekweb" target="_blank" rel="noreferrer">Support</a>
+        </div>
+      </div>
+      <div class="foot-bottom">
+        <div class="wrap">
+          <span>© 2026 Embeder · Open source</span>
+          <span class="mono">STM32F4 · Cortex-M4 · verified</span>
+        </div>
+      </div>
     </footer>
   </body>
 </html>

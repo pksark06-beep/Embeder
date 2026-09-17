@@ -9,6 +9,15 @@ document.querySelector(".theme-toggle")?.addEventListener("click", () => {
   localStorage.setItem("embeder-theme", next);
 });
 
+// Sticky top bar gets a hairline border once the page scrolls.
+const topbar = document.getElementById("topbar");
+if (topbar) {
+  const onScroll = () => topbar.classList.toggle("scrolled", window.scrollY > 8);
+  onScroll();
+  window.addEventListener("scroll", onScroll, { passive: true });
+}
+
+// Copy-to-clipboard buttons in docs code blocks.
 document.querySelectorAll(".copy-button").forEach((button) => {
   button.addEventListener("click", async () => {
     const target = document.getElementById(button.dataset.copy);
@@ -24,12 +33,29 @@ document.querySelectorAll(".copy-button").forEach((button) => {
   });
 });
 
+// Reveal-on-scroll for marketing sections (progressive enhancement).
+const reveals = [...document.querySelectorAll(".reveal")];
+if (reveals.length && "IntersectionObserver" in window && !window.matchMedia("(prefers-reduced-motion: reduce)").matches) {
+  const revealObserver = new IntersectionObserver((entries) => {
+    for (const entry of entries) {
+      if (entry.isIntersecting) {
+        entry.target.classList.add("in");
+        revealObserver.unobserve(entry.target);
+      }
+    }
+  }, { rootMargin: "0px 0px -8% 0px", threshold: 0.08 });
+  reveals.forEach((element) => revealObserver.observe(element));
+} else {
+  reveals.forEach((element) => element.classList.add("in"));
+}
+
+// Docs sidebar scroll-spy (only present on the docs page).
 const navLinks = [...document.querySelectorAll(".docs-sidebar a")];
 const sections = navLinks
   .map((link) => document.querySelector(link.getAttribute("href")))
   .filter(Boolean);
 
-if ("IntersectionObserver" in window) {
+if (sections.length && "IntersectionObserver" in window) {
   const observer = new IntersectionObserver((entries) => {
     const visible = entries
       .filter((entry) => entry.isIntersecting)
