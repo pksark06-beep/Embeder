@@ -2,9 +2,8 @@
 
 > Status: **Core decisions ratified 2026-09-12** (OD-1..OD-4 closed; OD-5
 > resolved 2026-09-20 as MPL-2.0). Phase 1 may begin. This document locks scope and boundaries before
-> implementation. It supersedes the vision described in `core.md` and the three
-> architecture PDFs wherever they conflict. Decisions here are formalized in the
-> ADRs under `docs/adr/`.
+> implementation. It supersedes the early vision and architecture drafts.
+> Decisions here are formalized in the ADRs under `docs/adr/`.
 >
 > Date: 2026-09-12
 
@@ -199,7 +198,7 @@ currently exposed. Treat untrusted projects as unsafe to build or simulate.
 - ❌ Guaranteeing electrical correctness of generated schematics (⚠️ only).
 - ❌ Being a general IDE. It is a *verification-loop workspace*.
 
-## 10. Phased roadmap (revised from `core.md`)
+## 10. Phased roadmap
 
 | Phase | Deliverable | Exit criterion (measurable) |
 |---|---|---|
