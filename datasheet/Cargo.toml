@@ -8,7 +8,7 @@ license = "MPL-2.0"
 [dependencies]
 embeder-core = { path = "../core" }
 # The one earned dependency: a small, pure-Rust, read-only XML parser for CMSIS-SVD.
-roxmltree = "0.20"
+roxmltree = "0.21"
 
 [lib]
 name = "embeder_datasheet"
