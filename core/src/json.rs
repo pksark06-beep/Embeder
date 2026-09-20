@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Minimal, dependency-free JSON string helpers — enough to emit provenance JSONL
 //! and boundary objects without pulling in serde. Not a parser; output only.
 

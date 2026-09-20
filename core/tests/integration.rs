@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Integration tests for the verification loop (ADR-0007 invariants).
 
 use embeder_core::*;

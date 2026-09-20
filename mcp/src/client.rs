@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! A minimal, blocking MCP stdio client: spawn a server, perform the initialize
 //! handshake, and call tools. Newline-delimited JSON-RPC 2.0 — the MCP wire protocol.
 
@@ -17,12 +18,21 @@ pub struct McpClient {
 impl McpClient {
     /// Spawn a server process and complete the MCP handshake.
     pub fn spawn(program: &str, args: &[String]) -> io::Result<Self> {
-        let mut child = Command::new(program)
-            .args(args)
-            .stdin(Stdio::piped())
-            .stdout(Stdio::piped())
-            .stderr(Stdio::inherit())
-            .spawn()?;
+        Self::spawn_with_options(program, args, false)
+    }
+
+    /// Use for datasheet, compiler, and simulator servers, which need no model keys.
+    pub fn spawn_without_model_secrets(program: &str, args: &[String]) -> io::Result<Self> {
+        Self::spawn_with_options(program, args, true)
+    }
+
+    fn spawn_with_options(program: &str, args: &[String], remove_keys: bool) -> io::Result<Self> {
+        let mut command = Command::new(program);
+        command.args(args).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::inherit());
+        if remove_keys {
+            embeder_core::process_env::remove_model_secrets(&mut command);
+        }
+        let mut child = command.spawn()?;
         let stdin = child.stdin.take().expect("piped stdin");
         let stdout = child.stdout.take().expect("piped stdout");
         let reader = BufReader::new(stdout);

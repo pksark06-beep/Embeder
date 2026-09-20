@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Structured parsing of GCC/Clang stderr into [`Diagnostic`]s. Pure and
 //! toolchain-independent, so it is fully testable without a compiler installed.
 

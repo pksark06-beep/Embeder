@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Grounded queries over a CMSIS-SVD device. Every answer carries a confidence tier
 //! and a citation; a miss is REFUSED (OutOfScope), never fabricated (ADR-0002).
 

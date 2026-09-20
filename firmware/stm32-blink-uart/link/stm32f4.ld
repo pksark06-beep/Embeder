@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 /* Minimal linker script for STM32F407 (1 MB FLASH @ 0x08000000, 128 KB SRAM). */
 ENTRY(Reset_Handler)
 

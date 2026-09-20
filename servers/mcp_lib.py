@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """Minimal MCP stdio server scaffold (ADR-0001).
 
 Speaks the MCP wire protocol: newline-delimited JSON-RPC 2.0 over stdin/stdout,

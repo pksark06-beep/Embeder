@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `McpSimOracle` — a `SimOracle` that runs Renode via the Simulation MCP server.
 //! The server executes Renode and captures the UART; the Core assigns the tier and
 //! the verifiability boundary.
@@ -36,7 +37,7 @@ impl McpSimOracle {
     }
 
     pub fn available(&self) -> bool {
-        McpClient::spawn(&self.program, &self.args).is_ok()
+        McpClient::spawn_without_model_secrets(&self.program, &self.args).is_ok()
     }
 
     fn boundary() -> VerifiabilityBoundary {
@@ -59,7 +60,7 @@ impl SimOracle for McpSimOracle {
     }
 
     fn simulate(&self, artifact_path: &str, _target: &str) -> SimResult {
-        let mut client = match McpClient::spawn(&self.program, &self.args) {
+        let mut client = match McpClient::spawn_without_model_secrets(&self.program, &self.args) {
             Ok(c) => c,
             Err(e) => return sim_fault(&format!("cannot start MCP simulation server: {}", e), "engine_error", false),
         };

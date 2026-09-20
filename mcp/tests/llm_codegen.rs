@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Tests for the BYOK model-in-the-loop. The default test needs neither python nor a
 //! network: it proves the *fallback contract* — if the model can't be reached, the
 //! loop still gets a grounded draft. The ignored test additionally exercises the real

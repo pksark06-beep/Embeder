@@ -19,7 +19,16 @@
       }
     ],
     "security": {
-      "csp": null
+      "csp": {
+        "default-src": "'self' customprotocol:",
+        "connect-src": "ipc: http://ipc.localhost",
+        "script-src": "'self'",
+        "style-src": "'self' 'unsafe-inline'",
+        "img-src": "'self' data:",
+        "font-src": "'self'",
+        "object-src": "'none'",
+        "frame-src": "'none'"
+      }
     }
   },
   "bundle": {
@@ -32,6 +41,7 @@
       "icons/icon.ico"
     ],
     "resources": {
+      "../../LICENSE": "LICENSE",
       "../../datasheet/data/stm32f4-mini.svd": "data/stm32f4-mini.svd",
       "../../firmware/stm32-blink-uart/src/main.c": "template/stm32-blink-uart/src/main.c",
       "../../firmware/stm32-blink-uart/src/startup.c": "template/stm32-blink-uart/src/startup.c",

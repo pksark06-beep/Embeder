@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Embeder native desktop shell (ADR-0006). The window loads `desktop/dist`; the
 //! frontend calls these commands via `invoke`, which delegate to the shared desktop
 //! API (identical to the dev server's HTTP endpoints). Presentation lives in the

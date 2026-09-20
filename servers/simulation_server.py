@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """Embeder Simulation MCP server (ADR-0001).
 
 Exposes `run_simulation` over MCP: boots an ELF on a Renode platform headlessly,

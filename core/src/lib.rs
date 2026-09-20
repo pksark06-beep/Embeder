@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Embeder Core — the headless verification-loop engine (ADR-0006, ADR-0007).
 //!
 //! The Core proposes nothing itself: it drives deterministic oracles (a compiler, a
@@ -18,6 +19,7 @@ pub mod engine;
 pub mod fixtures;
 pub mod armgcc;
 pub mod renode;
+pub mod process_env;
 
 pub use armgcc::ArmGccOracle;
 pub use engine::*;

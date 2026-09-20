@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Shared desktop API — the Core rendered as JSON views. The dev server and the Tauri
 //! command layer both call these, so the UI behaves identically in either host.
 
@@ -87,7 +88,9 @@ fn copy_dir_recursive(src: &Path, dest: &Path) -> io::Result<()> {
 }
 
 fn probe(cmd: &str, arg: &str) -> Option<String> {
-    let out = Command::new(cmd).arg(arg).output().ok()?;
+    let mut command = Command::new(cmd);
+    embeder_core::process_env::remove_model_secrets(&mut command);
+    let out = command.arg(arg).output().ok()?;
     if !out.status.success() { return None; }
     String::from_utf8_lossy(&out.stdout).lines().next().map(|s| s.trim().to_string())
 }
@@ -175,7 +178,7 @@ fn collect_workspace_files(root: &Path, directory: &Path, output: &mut Vec<Value
 fn spawn_mcp(name: &str) -> Result<McpClient, String> {
     let executable = std::env::current_exe().map_err(|error| error.to_string())?;
     let args = vec!["--mcp-server".to_string(), name.to_string()];
-    McpClient::spawn(&executable.to_string_lossy(), &args).map_err(|error| error.to_string())
+    McpClient::spawn_without_model_secrets(&executable.to_string_lossy(), &args).map_err(|error| error.to_string())
 }
 
 fn mcp_server_status(id: &str, label: &str, dependency: Value) -> Value {
@@ -185,7 +188,7 @@ fn mcp_server_status(id: &str, label: &str, dependency: Value) -> Value {
             "id": id,
             "name": label,
             "transport": "stdio JSON-RPC",
-            "isolation": "native worker · path jailed",
+            "isolation": "native worker · path checked",
             "status": "online",
             "latency_ms": started.elapsed().as_millis(),
             "dependency": dependency,
@@ -195,7 +198,7 @@ fn mcp_server_status(id: &str, label: &str, dependency: Value) -> Value {
             "id": id,
             "name": label,
             "transport": "stdio JSON-RPC",
-            "isolation": "native worker · path jailed",
+            "isolation": "native worker · path checked",
             "status": "offline",
             "latency_ms": started.elapsed().as_millis(),
             "dependency": dependency,
@@ -226,14 +229,14 @@ fn mcp_tools(kind: &str) -> Vec<Value> {
         })],
         "simulation" => vec![json!({
             "name": "run_simulation",
-            "description": "Run a sandboxed STM32F4 ELF in Renode and capture USART2.",
+            "description": "Run an STM32F4 ELF with artifact path checks in Renode and capture USART2.",
             "inputSchema": {"type": "object", "properties": {"elf_path": {"type": "string"}}, "required": ["elf_path"]}
         })],
         _ => Vec::new(),
     }
 }
 
-fn sandboxed_artifact(path: &str) -> Result<PathBuf, String> {
+fn checked_artifact(path: &str) -> Result<PathBuf, String> {
     let artifact = PathBuf::from(path)
         .canonicalize()
         .map_err(|error| format!("artifact unavailable: {error}"))?;
@@ -338,7 +341,7 @@ fn call_local_mcp_tool(kind: &str, name: &str, arguments: &Value) -> Result<Valu
                 .get("elf_path")
                 .and_then(Value::as_str)
                 .ok_or_else(|| "missing elf_path".to_string())?;
-            let artifact = sandboxed_artifact(artifact)?;
+            let artifact = checked_artifact(artifact)?;
             let renode = std::env::var("EMBEDER_RENODE")
                 .unwrap_or_else(|_| r"C:\Program Files\Renode\bin\Renode.exe".to_string());
             let result = RenodeOracle::stm32f4(renode)
@@ -453,7 +456,8 @@ pub fn workspace_files() -> Value {
     collect_workspace_files(&root, &root, &mut files);
     json!({
         "root": "firmware/stm32-blink-uart",
-        "sandboxed": true,
+        "path_checked": true,
+        "os_sandboxed": false,
         "files": files,
     })
 }
@@ -472,7 +476,8 @@ pub fn read_workspace_file(path: Option<&str>) -> Value {
             "contents": contents,
             "bytes": contents.len(),
             "editable": file.extension().and_then(|value| value.to_str()) != Some("md"),
-            "sandboxed": true,
+            "path_checked": true,
+            "os_sandboxed": false,
         }),
         Err(error) => json!({"error": format!("cannot read workspace file: {error}")}),
     }
@@ -492,7 +497,8 @@ pub fn save_workspace_file(path: Option<&str>, contents: &str) -> Value {
             "ok": true,
             "path": path.replace('\\', "/"),
             "bytes": contents.len(),
-            "sandboxed": true,
+            "path_checked": true,
+            "os_sandboxed": false,
         }),
         Err(error) => json!({"error": format!("cannot save workspace file: {error}")}),
     }
@@ -506,8 +512,8 @@ pub fn mcp_status() -> Value {
         "protocol": "2024-11-05",
         "sandbox": {
             "workspace": workspace_root().display().to_string(),
-            "network": "no network tools exposed",
-            "process_model": "one isolated stdio process per request",
+            "network": "tool catalog has no network tool; OS egress is not blocked",
+            "process_model": "stdio child process; no OS sandbox",
             "file_limit_kib": MAX_EDIT_BYTES / 1024,
         },
         "runtime": tool("embeder-mcp-worker", runtime),
@@ -557,7 +563,8 @@ pub fn probe_mcp(server: Option<&str>) -> Value {
         "latency_ms": started.elapsed().as_millis(),
         "tool_count": tools.len(),
         "result": result,
-        "sandboxed": true,
+        "path_checked": true,
+        "os_sandboxed": false,
     })
 }
 

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Grounding-the-loop tests (P2 -> P1): synthesis really uses SVD addresses, and the
 //! citations flow through to the loop outcome.
 

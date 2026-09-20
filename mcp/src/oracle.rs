@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `McpCompileOracle` — a `CompileOracle` that runs the build via the Firmware MCP
 //! server instead of shelling out directly. The server executes the toolchain; the
 //! Core parses stderr with its own tested parser, keeping interpretation in one place.
@@ -48,7 +49,7 @@ impl McpCompileOracle {
 
     /// True if the server can be started and completes the handshake.
     pub fn available(&self) -> bool {
-        McpClient::spawn(&self.program, &self.args).is_ok()
+        McpClient::spawn_without_model_secrets(&self.program, &self.args).is_ok()
     }
 }
 
@@ -73,7 +74,7 @@ impl CompileOracle for McpCompileOracle {
             "files": Value::Object(files),
         });
 
-        let mut client = match McpClient::spawn(&self.program, &self.args) {
+        let mut client = match McpClient::spawn_without_model_secrets(&self.program, &self.args) {
             Ok(c) => c,
             Err(e) => return err_result(&format!("cannot start MCP firmware server: {}", e)),
         };

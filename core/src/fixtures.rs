@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! In-process fixture oracles. Deterministic stand-ins for `arm-none-eabi-gcc` and
 //! Renode so the loop is provable today without toolchains installed. The fixture
 //! compiler emits authentic gcc-style stderr and parses it with the *real* parser,

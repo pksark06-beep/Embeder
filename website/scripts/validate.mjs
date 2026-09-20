@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 import { access, readFile } from "node:fs/promises";
 
 const requiredFiles = [

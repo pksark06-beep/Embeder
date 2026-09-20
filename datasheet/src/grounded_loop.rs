@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `grounded-loop` — the P2→P1 join: synthesize firmware from grounded SVD facts,
 //! then drive the verification loop over it.
 //!   (default)  fixture oracles (no toolchains needed)

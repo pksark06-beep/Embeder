@@ -13,6 +13,8 @@ hardware code it hasn't proven.
 **[Installation guide](docs/INSTALLATION.md)** ·
 **[Support the project](https://buymeacoffee.com/sekweb)**
 
+[![M8ven Score](https://m8ven.ai/badge/mcp/pksark06-beep/embeder)](https://m8ven.ai/mcp/pksark06-beep/embeder)
+
 The Windows installer contains the Embeder workbench, bundled datasheet data and the
 starter workspace. Real firmware builds require Arm GNU `arm-none-eabi-gcc`; simulation
 requires Renode. Python and an API key are optional and only needed for model-backed
@@ -79,7 +81,8 @@ addresses from the CMSIS-SVD, and the citations attached to the draft are those 
 facts, not anything the model claimed. On a compile failure the diagnostics are fed
 back and the model **self-heals**; if it can never satisfy the oracles the loop HALTs
 honestly. The LLM runs behind a Codegen MCP server (`servers/codegen_server.py`), so
-keys stay local and the model is just another sandboxed tool worker (ADR-0001).
+the selected provider receives the prompt and API key over the network.
+Toolchain workers currently have application-level path checks, not OS-level isolation.
 
 Bring your own key — set one of these (or drop it in a git-ignored `.env`; see
 [`.env.example`](.env.example)). With **no** key set, the loop falls back to
@@ -154,3 +157,12 @@ firmware carries a *verifiability boundary* stating exactly what simulation exer
 If Embeder is useful to your work, you can support continued development at
 [buymeacoffee.com/sekweb](https://buymeacoffee.com/sekweb). Contributions, bug reports,
 and reproducible hardware cases are equally welcome.
+
+## License and official releases
+
+Embeder source code is licensed under the [Mozilla Public License 2.0](LICENSE).
+The source for each official Windows release is available in this repository at its
+release tag. Contributions are welcome under the same license; see
+[CONTRIBUTING.md](CONTRIBUTING.md). The Embeder name and logo are covered by the
+[trademark policy](TRADEMARKS.md), which keeps unofficial forks distinguishable.
+Please report security issues through the process in [SECURITY.md](SECURITY.md).

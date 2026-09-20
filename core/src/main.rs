@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `embeder-demo` — headless proof of the verification loop.
 //!
 //!   (default)  fixture oracles, no toolchains needed (P1a).

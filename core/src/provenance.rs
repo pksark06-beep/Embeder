@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Append-only provenance ledger (SYSTEM_SPEC §6). Every consequential action the
 //! Core takes is recorded so a VERIFIED artifact is auditable and reproducible from
 //! its input hash + named oracle versions.

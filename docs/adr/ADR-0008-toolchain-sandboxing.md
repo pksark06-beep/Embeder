@@ -1,6 +1,6 @@
 # ADR-0008 — Sandboxing LLM-driven toolchain workers
 
-- **Status:** Accepted
+- **Status:** Accepted target design; not yet implemented
 - **Date:** 2026-09-12
 
 ## Context
@@ -11,6 +11,13 @@ arbitrary build scripts; KiCad automation runs arbitrary Python (`pcbnew`);
 code-execution and hardware-damage risk, even with no malice — just a bad tool call.
 
 ## Decision
+This section records the intended architecture, not current protections. The
+current implementation has application-level path checks and removes model
+API key environment variables from non-model child processes, but it has no
+OS-level filesystem jail, network egress block, or keychain integration. There
+is no flash tool exposed at present. See `SECURITY.md` for the operational
+security boundary.
+
 All toolchain workers run under least privilege:
 - **Filesystem jail:** a worker can read/write only within the active
   `embeder-workspace/` (plus read-only access to installed toolchains). No access to

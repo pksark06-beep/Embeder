@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! P2 grounding tests. The addresses asserted here are cross-checked against the
 //! exact registers the P1 firmware uses (firmware/stm32-blink-uart/src/main.c) and
 //! that Renode verified — so "the datasheet layer agrees with reality".

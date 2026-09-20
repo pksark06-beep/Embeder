@@ -1,7 +1,7 @@
 # Embeder — System Specification (v0.1, design pass)
 
-> Status: **Core decisions ratified 2026-09-12** (OD-1..OD-4 closed; OD-5 open,
-> non-blocking). Phase 1 may begin. This document locks scope and boundaries before
+> Status: **Core decisions ratified 2026-09-12** (OD-1..OD-4 closed; OD-5
+> resolved 2026-09-20 as MPL-2.0). Phase 1 may begin. This document locks scope and boundaries before
 > implementation. It supersedes the vision described in `core.md` and the three
 > architecture PDFs wherever they conflict. Decisions here are formalized in the
 > ADRs under `docs/adr/`.
@@ -135,15 +135,15 @@ See ADR-0005.
 └───────────┘ └─────┬─────┘   └──────┬───────┘  └──────┬───────┘
                     ▼                ▼                 ▼
              ┌──────────────────────────────────────────────┐
-             │  Toolchain Workers — SANDBOXED subprocesses   │  compilers, Renode/
-             │  fs-jailed to workspace · no ambient network   │  QEMU/simavr, KiCad
+             │  Toolchain Workers — child processes           │  compilers, Renode/
+             │  path-checked; OS sandbox still planned        │  QEMU/simavr, KiCad
              │  · hardware/flash behind explicit user consent │  pcbnew, Freerouting
              └──────────────────────────────────────────────┘
 ```
 
 Key invariants:
-- **The UI never executes a toolchain.** All execution is behind the Core → MCP →
-  sandboxed-worker path, so every action is loggable, cancelable, and permissioned.
+- **The UI never executes a toolchain.** Execution is routed through the Core → MCP →
+  worker path. Workspace path checks exist, but OS isolation is not yet implemented.
 - **The Core is the sole authority for tier labels.** MCP servers report raw oracle
   results + provenance; the Core assigns ✅/🟡/⚠️/⛔ from that. Tiering logic lives in
   one place, not scattered across servers.
@@ -182,11 +182,14 @@ ADR-0003, ADR-0007.
 
 ## 8. Security & trust model (summary)
 
-The threat is not a remote attacker — it is **an LLM issuing tool calls that run
-code and touch hardware on the user's machine.** Mitigations (ADR-0008): workspace
-filesystem jail for all workers; no ambient network egress from workers; hardware
-flashing and any destructive action gated behind explicit, per-action user consent;
-BYOK secrets stored in the OS keychain, never passed to workers.
+The principal threat is **an LLM issuing tool calls that run code on the user's
+machine.** Current controls include application-level workspace path checks and
+removal of model API key environment variables from non-model child processes.
+There is no OS filesystem jail or network egress block yet. BYOK secrets are
+provided through environment variables or a local `.env` file; a worker with
+the user's OS privileges may still read that file. The proposed keychain and
+hardware-consent controls in ADR-0008 are not implemented; no flash tool is
+currently exposed. Treat untrusted projects as unsafe to build or simulate.
 
 ## 9. Non-goals (v1)
 
@@ -215,7 +218,7 @@ BYOK secrets stored in the OS keychain, never passed to workers.
 | OD-2 | PCB ambition: assisted vs. autonomous routing | ✅ Accepted — assisted for v1 | ADR-0004 |
 | OD-3 | Datasheet: structured-first vs. RAG-first | ✅ Accepted — structured-first | ADR-0002 |
 | OD-4 | Primary user | ✅ **Both, pro-first** — see below | ADR-0009 (pending) |
-| OD-5 | License / governance for "open source" | ⏳ Open — non-blocking for P1 | — |
+| OD-5 | License / governance for "open source" | ✅ MPL-2.0 for source code; official name and logo reserved | `LICENSE`, `TRADEMARKS.md` |
 
 ### 11.1 OD-4 resolution — "Both, pro-first"
 
@@ -238,6 +241,5 @@ additive layer — never a compromise to the core:
 
 ---
 
-*OD-1..OD-4 are closed. Only OD-5 (license/governance) remains and it does not block
-Phase 1. The verification loop core (P1 — STM32 intent→✅compiled→✅Renode-verified,
-headless) can begin.*
+*OD-1..OD-5 are closed. The verification loop core (P1 — STM32
+intent→✅compiled→✅Renode-verified, headless) can begin.*

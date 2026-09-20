@@ -1,4 +1,5 @@
 <!DOCTYPE html>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
 <html lang="en">
 <head>
   <meta charset="UTF-8" />
@@ -112,7 +113,7 @@
         </article>
         <div class="summary-grid">
           <article class="metric"><span>Current verdict</span><strong id="verdictMetric">Not run</strong><small id="verdictMode">Real GCC + Renode</small></article>
-          <article class="metric"><span>MCP transport</span><strong id="mcpMetric">Checking…</strong><small>Isolated stdio workers</small></article>
+          <article class="metric"><span>MCP transport</span><strong id="mcpMetric">Checking…</strong><small>Local stdio child processes</small></article>
           <article class="metric"><span>Target</span><strong>STM32F407</strong><small>Cortex-M4 · Discovery</small></article>
         </div>
         <article class="surface-card verification-card">
@@ -161,9 +162,9 @@
       </section>
 
       <section class="page" data-page="extensions" hidden>
-        <header class="page-header"><div><span class="eyebrow">LOCAL CAPABILITIES</span><h1>Extensions & MCP</h1><p>Inspect every local tool server, dependency, and sandbox boundary.</p></div><button class="button" id="refreshMcp"><svg><use href="#i-refresh"/></svg>Refresh</button></header>
+        <header class="page-header"><div><span class="eyebrow">LOCAL CAPABILITIES</span><h1>Extensions & MCP</h1><p>Inspect every local tool server, dependency, and security boundary.</p></div><button class="button" id="refreshMcp"><svg><use href="#i-refresh"/></svg>Refresh</button></header>
         <div class="extension-toolbar"><input id="extensionSearch" type="search" placeholder="Filter MCP servers and tools" aria-label="Filter extensions"/><span id="extensionSummary">Discovering local servers…</span></div>
-        <div class="sandbox-banner"><svg><use href="#i-check"/></svg><div><strong>Application sandbox enforced</strong><span id="sandboxSummary">One isolated stdio process per request. Workspace paths are jailed.</span></div></div>
+        <div class="sandbox-banner"><svg><use href="#i-check"/></svg><div><strong>Application path checks active</strong><span id="sandboxSummary">Workers are child processes without OS isolation.</span></div></div>
         <div class="extension-grid" id="extensionGrid"></div>
       </section>
 
@@ -171,7 +172,7 @@
         <header class="page-header"><div><span class="eyebrow">WORKBENCH</span><h1>Settings</h1><p>Toolchains, editor behavior, and security boundaries for this device.</p></div></header>
         <div class="settings-grid">
           <article class="surface-card"><div class="card-title">Toolchains</div><div class="setting-list" id="toolchains"></div></article>
-          <article class="surface-card"><div class="card-title">Security policy</div><div class="policy-list"><div><b>Workspace jail</b><span>firmware/stm32-blink-uart only</span></div><div><b>Worker network</b><span>No network tools exposed</span></div><div><b>Hardware actions</b><span>Explicit approval required</span></div><div><b>Secrets</b><span>Native keychain only</span></div></div></article>
+          <article class="surface-card"><div class="card-title">Security status</div><div class="policy-list"><div><b>Workspace paths</b><span>Checked by the app</span></div><div><b>Worker network</b><span>No OS egress block yet</span></div><div><b>Hardware actions</b><span>No flash tool exposed</span></div><div><b>Secrets</b><span>Environment or local .env</span></div></div></article>
         </div>
       </section>
     </main>

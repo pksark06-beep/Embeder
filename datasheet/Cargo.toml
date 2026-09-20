@@ -3,7 +3,7 @@ name = "embeder-datasheet"
 version = "0.1.0"
 edition = "2021"
 description = "Embeder datasheet grounding: authoritative register/pinmux facts from CMSIS-SVD, with citations and honest tiering (ADR-0002)."
-# license: TBD — see OD-5
+license = "MPL-2.0"
 
 [dependencies]
 embeder-core = { path = "../core" }

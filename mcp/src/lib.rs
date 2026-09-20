@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Embeder MCP client bridge (ADR-0001).
 //!
 //! The Rust Core is an MCP *client*: it spawns local MCP tool servers and drives them
