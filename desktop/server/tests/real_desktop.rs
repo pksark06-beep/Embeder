@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Explicit integration checks: real desktop executable, MCP, GCC and Renode.
 //! cargo test -p embeder-desktop --test real_desktop -- --ignored
 use embeder_mcp::McpClient;
@@ -21,7 +22,7 @@ fn request_body(port: u16, method: &str, path: &str, body: &str) -> Value {
     stream.set_read_timeout(Some(Duration::from_secs(30))).unwrap();
     write!(
         stream,
-        "{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nContent-Type: text/plain\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
+        "{method} {path} HTTP/1.1\r\nHost: 127.0.0.1:{port}\r\nContent-Type: text/plain\r\nX-Embeder-Client: 1\r\nContent-Length: {}\r\nConnection: close\r\n\r\n{body}",
         body.len()
     ).unwrap();
     let mut response = String::new();

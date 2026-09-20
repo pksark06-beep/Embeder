@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! P1b real-toolchain tests. Ignored by default because they require
 //! `arm-none-eabi-gcc` on PATH. Run explicitly with:
 //!   cargo test --test real_toolchain -- --ignored

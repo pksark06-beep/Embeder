@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `McpDatasheet` — grounded register lookups via the Datasheet MCP server. Mirrors
 //! the `datasheet` crate's contract over the wire: a hit is Verified + cited, a miss
 //! is OutOfScope and never fabricated.
@@ -37,7 +38,7 @@ impl McpDatasheet {
     }
 
     pub fn available(&self) -> bool {
-        McpClient::spawn(&self.program, &self.args).is_ok()
+        McpClient::spawn_without_model_secrets(&self.program, &self.args).is_ok()
     }
 
     pub fn register_map(&self, peripheral: &str) -> GroundedRegisterMap {
@@ -51,7 +52,7 @@ impl McpDatasheet {
             note,
         };
 
-        let mut client = match McpClient::spawn(&self.program, &self.args) {
+        let mut client = match McpClient::spawn_without_model_secrets(&self.program, &self.args) {
             Ok(c) => c,
             Err(e) => return refuse(format!("cannot start MCP datasheet server: {}", e)),
         };

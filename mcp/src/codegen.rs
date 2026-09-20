@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `LlmCodegen` — the BYOK model in the loop (the missing half of the thesis).
 //!
 //! It drafts firmware with a real large language model (over the Codegen MCP server),

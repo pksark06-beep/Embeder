@@ -67,7 +67,8 @@ The datasheet server parses the SVD in Python (stdlib `xml.etree`); the Rust
 cross-checks that the MCP path returns the same USART2/CR1 addresses (guards drift).
 
 ## 8. Next
-- **Sandboxing (ADR-0008):** fs-jail the server workers to the workspace; no ambient
-  network egress; hardware/flash actions behind explicit consent.
+- **Sandboxing (ADR-0008):** implement an OS filesystem jail and network egress
+  controls for server workers. Current path checks are not an OS sandbox.
+  Any future hardware/flash action needs explicit user consent.
 - **Consolidate:** have the loop/codegen consult the *MCP* datasheet (currently the
   in-process Rust crate is used by GroundedCodegen; the MCP path is proven in tests).

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 /*
  * STM32F4 blink + UART — bare-metal, register level (no HAL, no libc).
  * Toggles PA5 and transmits a banner over USART2 (PA2 = TX, AF7).

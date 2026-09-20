@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 const root = document.documentElement;
 const savedTheme = localStorage.getItem("embeder-theme");
 const preferredLight = window.matchMedia("(prefers-color-scheme: light)").matches;

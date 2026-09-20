@@ -1,9 +1,11 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Real Renode simulation oracle (P1b): boots the ELF on an STM32F4 platform
 //! headlessly, captures USART2 to a file, and passes iff the expected banner is
 //! actually transmitted. Always attaches an honest verifiability boundary — the
 //! STM32_UART model is deterministic, but analog is stubbed and RF is out of scope.
 
 use crate::oracle::{SimOracle, SimResult};
+use crate::process_env::remove_model_secrets;
 use crate::tiers::VerifiabilityBoundary;
 use std::fs;
 use std::io::Read;
@@ -46,7 +48,9 @@ impl RenodeOracle {
     }
 
     pub fn available(&self) -> bool {
-        Command::new(&self.bin).arg("--version").output().is_ok()
+        let mut probe = Command::new(&self.bin);
+        remove_model_secrets(&mut probe);
+        probe.arg("--version").output().is_ok()
     }
 
     fn full_boundary() -> VerifiabilityBoundary {
@@ -163,6 +167,7 @@ impl SimOracle for RenodeOracle {
         }
 
         let mut cmd = Command::new(&self.bin);
+        remove_model_secrets(&mut cmd);
         cmd.args(["--console", "--disable-gui", "--plain"]).arg(&resc);
 
         match run_with_timeout(cmd, Duration::from_secs(self.timeout_secs)) {

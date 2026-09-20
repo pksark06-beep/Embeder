@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
@@ -100,7 +101,7 @@
         <div class="wrap">
           <div class="stat"><b>5.0<span class="unit">s</span></b><span>Real compile + Renode run, end to end</span></div>
           <div class="stat"><b>0</b><span>Fabricated register addresses — SVD-grounded</span></div>
-          <div class="stat"><b>3 / 3</b><span>MCP tool servers, isolated over stdio</span></div>
+          <div class="stat"><b>3 / 3</b><span>MCP tool servers over local stdio</span></div>
           <div class="stat"><b>100<span class="unit">%</span></b><span>Verdicts backed by tool output, not vibes</span></div>
         </div>
       </section>
@@ -199,10 +200,10 @@
             <div class="feature-row reverse reveal">
               <div class="feature-body">
                 <span class="eyebrow">Architecture</span>
-                <h3>Tools isolated behind MCP.</h3>
-                <p>The datasheet, firmware and simulation tools each run as a short-lived, path-jailed MCP worker over stdio JSON-RPC. The renderer never decides verification state — a shared Rust core does.</p>
+                <h3>Tools separated by MCP.</h3>
+                <p>The datasheet, firmware and simulation tools run as child processes over stdio JSON-RPC, with application-level path checks. The renderer never decides verification state — a shared Rust core does.</p>
                 <ul class="feature-points">
-                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>One process per request.</b> No ambient network, no traversal.</span></li>
+                  <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Local workers.</b> File paths are checked; OS isolation and egress blocking are future work.</span></li>
                   <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Fixed tool catalog.</b> Datasheet, Firmware and Simulation, each health-checked.</span></li>
                   <li><svg aria-hidden="true"><use href="#i-check"/></svg><span><b>Local-first &amp; BYOK.</b> Your keys stay on your machine.</span></li>
                 </ul>
@@ -211,7 +212,7 @@
               <div class="feature-media">
                 <figure class="app-frame">
                   <div class="app-titlebar" aria-hidden="true"><span class="app-dots"><i></i><i></i><i></i></span><span class="app-addr mono">Extensions &amp; MCP</span></div>
-                  <img src="./img/app-extensions.png" width="1500" height="940" loading="lazy" alt="Embeder Extensions view: Datasheet, Firmware and Simulation MCP servers online with their tool catalogs and sandbox checks." />
+                  <img src="./img/app-extensions.png" width="1500" height="940" loading="lazy" alt="Embeder Extensions view: Datasheet, Firmware and Simulation MCP servers online with their tool catalogs and path checks." />
                 </figure>
               </div>
             </div>
@@ -229,7 +230,7 @@
           <div class="bento">
             <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-terminal"/></svg></div><h4>Real toolchains</h4><p>arm-none-eabi-gcc and Renode run for real — not a mocked pipeline. If it says compiled, it compiled.</p></article>
             <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-chip"/></svg></div><h4>Register-level ground truth</h4><p>CMSIS-SVD is the structured source of truth. Prose gets RAG; addresses do not.</p></article>
-            <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-shield"/></svg></div><h4>Sandboxed by default</h4><p>Path-jailed workers, no network tools, explicit approval for anything that touches hardware.</p></article>
+            <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-shield"/></svg></div><h4>Explicit trust boundary</h4><p>Workspace path checks and a fixed MCP tool catalog. OS-level worker isolation remains on the roadmap.</p></article>
             <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-code"/></svg></div><h4>Open source</h4><p>Read the code, run the oracles, challenge the boundary. A Rust core with Python MCP servers.</p></article>
             <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-blocks"/></svg></div><h4>BYOK models</h4><p>Auto-detects Gemini, OpenAI-compatible, or Vercel AI Gateway. No key? Deterministic fallback.</p></article>
             <article class="bento-card reveal"><div class="ic"><svg aria-hidden="true"><use href="#i-wave"/></svg></div><h4>Provenance you can audit</h4><p>Every stage writes a record — who drafted, what compiled, what the simulator saw.</p></article>

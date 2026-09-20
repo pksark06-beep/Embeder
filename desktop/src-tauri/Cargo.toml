@@ -3,7 +3,7 @@ name = "embeder-tauri"
 version = "0.2.0"
 edition = "2021"
 description = "Embeder native desktop shell (ADR-0006). Loads desktop/dist and exposes the shared desktop API as Tauri commands."
-# license: TBD — see OD-5
+license = "MPL-2.0"
 #
 # Excluded from the root workspace: Tauri's native build uses WebView2 + the MSVC
 # toolchain. Build with the MSVC Rust toolchain, e.g.:

@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `mcp_loop` — drive the verification loop with the compile step running over MCP
 //! (Rust Core -> stdio JSON-RPC -> Python firmware server -> arm-none-eabi-gcc).
 //!   (default)  MCP compile + fixture simulation

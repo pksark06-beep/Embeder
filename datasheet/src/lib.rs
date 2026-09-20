@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Embeder datasheet grounding (ADR-0002).
 //!
 //! Register/field facts come from an authoritative *structured* source (CMSIS-SVD),

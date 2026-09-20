@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `llm_loop` — the product path: a real BYOK model drafts the firmware, grounded on
 //! CMSIS-SVD facts, and the same oracle chain verifies it. The model only proposes;
 //! compile + simulation decide VERIFIED. With no API key it falls back to determin-

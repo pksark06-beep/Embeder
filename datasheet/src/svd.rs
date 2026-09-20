@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! CMSIS-SVD parser (the subset Embeder needs). Read-only, built on roxmltree.
 //! Handles `derivedFrom` peripherals and the three common field bit encodings so a
 //! full vendor .svd works, not just the bundled excerpt.

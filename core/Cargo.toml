@@ -3,7 +3,7 @@ name = "embeder-core"
 version = "0.1.0"
 edition = "2021"
 description = "Embeder verification-loop Core (headless): a closed compile+simulate loop with provenance and honest tiering."
-# license: TBD — see OD-5 (docs/SYSTEM_SPEC.md §11)
+license = "MPL-2.0"
 
 # Deliberately zero external dependencies: the Core builds offline on pure std.
 # (Cryptographic hashing/JSON/MCP-client crates arrive when they earn their keep.)

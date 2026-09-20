@@ -3,7 +3,7 @@ name = "embeder-desktop"
 version = "0.2.0"
 edition = "2021"
 description = "Embeder desktop dev server: serves the UI and exposes the shared desktop API over a tiny std-only HTTP layer (ADR-0006)."
-# license: TBD — see OD-5
+license = "MPL-2.0"
 
 [dependencies]
 embeder-desktop-api = { path = "../api" }

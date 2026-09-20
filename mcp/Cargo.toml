@@ -3,7 +3,7 @@ name = "embeder-mcp"
 version = "0.1.0"
 edition = "2021"
 description = "MCP client bridge (ADR-0001): the Rust Core talks to local MCP tool servers over stdio JSON-RPC."
-# license: TBD — see OD-5
+license = "MPL-2.0"
 
 [dependencies]
 embeder-core = { path = "../core" }

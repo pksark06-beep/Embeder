@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! The parsed CMSIS-SVD data model (the subset Embeder grounds against).
 
 #[derive(Debug, Clone)]

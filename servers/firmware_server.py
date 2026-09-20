@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """Embeder Firmware MCP server (ADR-0001).
 
 Exposes `compile_firmware` over MCP: a thin, sandboxable executor around a native

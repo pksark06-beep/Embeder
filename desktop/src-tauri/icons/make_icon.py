@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """Generate the Embeder app icon set from a single vector-style master rendered with
 Pillow. The mark: a phosphor-green oscilloscope trace forming a checkmark on a dark
 instrument tile — "signal, verified." Re-run to regenerate all sizes + the favicon.

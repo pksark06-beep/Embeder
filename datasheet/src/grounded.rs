@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Grounded code generation: P2 → P1.
 //!
 //! `GroundedCodegen` synthesizes firmware whose register addresses and bit positions

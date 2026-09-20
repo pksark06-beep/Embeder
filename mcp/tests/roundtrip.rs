@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! MCP round-trip tests (ignored by default: need `python` on PATH + the firmware
 //! server + arm-none-eabi-gcc). Run with:
 //!   cargo test -p embeder-mcp --test roundtrip -- --ignored

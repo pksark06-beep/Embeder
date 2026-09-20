@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """Embeder Codegen MCP server (ADR-0001) — the BYOK model in the loop.
 
 Exposes `generate_code` over MCP: given a system + user prompt (built by the Rust
@@ -26,6 +27,7 @@ import sys
 import json
 import urllib.request
 import urllib.error
+import urllib.parse
 
 sys.path.insert(0, os.path.dirname(os.path.abspath(__file__)))
 from mcp_lib import serve  # noqa: E402
@@ -102,6 +104,18 @@ def _provider_config(provider):
     return None
 
 
+def _validated_base_url(value):
+    """Send keys only over HTTPS or to an explicitly configured loopback model."""
+    parsed = urllib.parse.urlsplit(value)
+    if not parsed.hostname or parsed.username or parsed.password or parsed.query or parsed.fragment:
+        raise ValueError("invalid model endpoint URL")
+    if parsed.scheme == "https":
+        return value.rstrip("/")
+    if parsed.scheme == "http" and parsed.hostname.lower() in ("localhost", "127.0.0.1", "::1"):
+        return value.rstrip("/")
+    raise ValueError("model endpoint must use HTTPS (HTTP is allowed only on loopback)")
+
+
 def _http_post_json(url, headers, payload, timeout):
     data = json.dumps(payload).encode("utf-8")
     req = urllib.request.Request(url, data=data, headers=headers, method="POST")
@@ -109,25 +123,23 @@ def _http_post_json(url, headers, payload, timeout):
         with urllib.request.urlopen(req, timeout=timeout) as resp:
             return json.loads(resp.read().decode("utf-8"))
     except urllib.error.HTTPError as e:
-        body = ""
-        try:
-            body = e.read().decode("utf-8", errors="replace")[:500]
-        except Exception:  # noqa: BLE001
-            pass
-        raise RuntimeError(f"HTTP {e.code}: {body or e.reason}")
+        # Provider error bodies can echo prompts or secrets; never return them to MCP.
+        raise RuntimeError(f"model provider returned HTTP {e.code}") from None
 
 
 def _call_gemini(cfg, system, user, temperature, max_tokens, timeout):
-    url = f"{cfg['base_url']}/models/{cfg['model']}:generateContent?key={cfg['api_key']}"
+    url = f"{cfg['base_url']}/models/{cfg['model']}:generateContent"
     payload = {
         "system_instruction": {"parts": [{"text": system}]},
         "contents": [{"role": "user", "parts": [{"text": user}]}],
         "generationConfig": {"temperature": temperature, "maxOutputTokens": max_tokens},
     }
-    resp = _http_post_json(url, {"Content-Type": "application/json"}, payload, timeout)
+    resp = _http_post_json(url, {
+        "Content-Type": "application/json", "x-goog-api-key": cfg["api_key"]
+    }, payload, timeout)
     candidates = resp.get("candidates") or []
     if not candidates:
-        raise RuntimeError(f"empty Gemini response: {json.dumps(resp)[:300]}")
+        raise RuntimeError("empty Gemini response")
     parts = candidates[0].get("content", {}).get("parts") or []
     return "".join(p.get("text", "") for p in parts)
 
@@ -147,7 +159,7 @@ def _call_openai(cfg, system, user, temperature, max_tokens, timeout):
     resp = _http_post_json(url, headers, payload, timeout)
     choices = resp.get("choices") or []
     if not choices:
-        raise RuntimeError(f"empty completion: {json.dumps(resp)[:300]}")
+        raise RuntimeError("empty completion")
     return choices[0].get("message", {}).get("content", "") or ""
 
 
@@ -192,13 +204,15 @@ def generate_code(system="", user="", provider=None, model=None,
                 "error": f"no API key for provider '{resolved}'"}
 
     try:
+        cfg["base_url"] = _validated_base_url(cfg["base_url"])
         if cfg["kind"] == "gemini":
             text = _call_gemini(cfg, system, user, temperature, max_tokens, timeout_secs)
         else:
             text = _call_openai(cfg, system, user, temperature, max_tokens, timeout_secs)
     except Exception as e:  # noqa: BLE001 - report any provider/network failure, never crash the loop
+        detail = str(e).replace(cfg["api_key"], "[redacted]")
         return {"available": True, "provider": resolved, "model": cfg["model"], "code": "", "text": "",
-                "error": f"{type(e).__name__}: {e}"}
+                "error": f"{type(e).__name__}: {detail}"}
 
     return {"available": True, "provider": resolved, "model": cfg["model"],
             "code": _extract_code(text), "text": text, "error": None}

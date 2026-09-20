@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! The closed verification loop (ADR-0007) — the thesis in code.
 //!
 //! DRAFT --compile--> BUILT --simulate--> VERIFIED, with bounded retry and honest

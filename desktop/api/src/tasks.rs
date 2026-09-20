@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Real workspace tasks. Hosts schedule work here; renderers only observe state.
 use super::*;
 use embeder_core::{short_hash, Codegen, Diagnostic, LoopContext, ProvenanceLedger};

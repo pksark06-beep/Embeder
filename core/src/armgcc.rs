@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Real `arm-none-eabi-gcc` compile oracle (P1b).
 //!
 //! With a board build profile (CPU flags + startup source + linker script) it
@@ -6,6 +7,7 @@
 
 use crate::gcc::parse_gcc_stderr;
 use crate::oracle::{CompileOracle, CompileResult, Diagnostic, FirmwareDraft};
+use crate::process_env::remove_model_secrets;
 use std::fs;
 use std::path::PathBuf;
 use std::process::Command;
@@ -20,7 +22,9 @@ pub fn compiler_path() -> String {
     if let Ok(path) = std::env::var("EMBEDER_GCC") {
         return path;
     }
-    if Command::new("arm-none-eabi-gcc").arg("--version").output()
+    let mut probe = Command::new("arm-none-eabi-gcc");
+    remove_model_secrets(&mut probe);
+    if probe.arg("--version").output()
         .map(|out| out.status.success()).unwrap_or(false) {
         return "arm-none-eabi-gcc".into();
     }
@@ -75,12 +79,16 @@ impl ArmGccOracle {
     }
 
     pub fn available(&self) -> bool {
-        Command::new(&self.cc).arg("--version").output()
+        let mut probe = Command::new(&self.cc);
+        remove_model_secrets(&mut probe);
+        probe.arg("--version").output()
             .map(|out| out.status.success()).unwrap_or(false)
     }
 
     fn version(&self) -> String {
-        match Command::new(&self.cc).arg("--version").output() {
+        let mut probe = Command::new(&self.cc);
+        remove_model_secrets(&mut probe);
+        match probe.arg("--version").output() {
             Ok(o) => String::from_utf8_lossy(&o.stdout)
                 .lines()
                 .next()
@@ -132,6 +140,7 @@ impl CompileOracle for ArmGccOracle {
         }
 
         let mut cmd = Command::new(&self.cc);
+        remove_model_secrets(&mut cmd);
         cmd.current_dir(&dir);
         cmd.args(&self.cpu_flags).args(&self.extra_flags);
 

@@ -1,3 +1,4 @@
+/* SPDX-License-Identifier: MPL-2.0 */
 /*
  * Minimal Cortex-M startup + vector table for STM32F4 (C, no assembly).
  * Sets the initial stack, copies .data, zeroes .bss, then calls main().

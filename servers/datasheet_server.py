@@ -1,3 +1,4 @@
+# SPDX-License-Identifier: MPL-2.0
 """Embeder Datasheet MCP server (ADR-0001, ADR-0002).
 
 Exposes `register_map` / `lookup_register` over MCP, sourced from a CMSIS-SVD file.

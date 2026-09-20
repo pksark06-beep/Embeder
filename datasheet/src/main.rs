@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! `datasheet-demo` — print a grounded register map for a peripheral.
 //!   datasheet-demo [PERIPHERAL]     (default: USART2)
 

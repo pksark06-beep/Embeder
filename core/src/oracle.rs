@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! The oracle contracts. A firmware draft is only ever advanced by a deterministic
 //! oracle: a compiler (CompileOracle) and a simulator (SimOracle). Fixtures and real
 //! toolchains are interchangeable implementations of these traits.

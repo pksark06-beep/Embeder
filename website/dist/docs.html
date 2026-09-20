@@ -1,4 +1,5 @@
 <!doctype html>
+<!-- SPDX-License-Identifier: MPL-2.0 -->
 <html lang="en" data-theme="dark">
   <head>
     <meta charset="utf-8" />
@@ -73,7 +74,7 @@
           <article class="doc-section" id="install">
             <span class="doc-tag">01 · Install</span>
             <h2>Install Embeder</h2>
-            <p>Download the current Windows x64 setup from the official GitHub release and run it. Embeder installs for the current user and creates a sandboxed starter workspace on first launch.</p>
+            <p>Download the current Windows x64 setup from the official GitHub release and run it. Embeder installs for the current user and creates a starter workspace on first launch.</p>
             <div class="callout">
               <strong>Release integrity</strong>
               <p>Verify the installer before running it if your browser marks the unsigned community build as unfamiliar.</p>
@@ -168,11 +169,12 @@ cargo +stable-x86_64-pc-windows-msvc tauri build `
             <span class="doc-tag">07 · Security</span>
             <h2>Security model</h2>
             <ul class="plain-list">
-              <li>Workspace file access is restricted to the seeded firmware project.</li>
+              <li>The app checks workspace file paths against the seeded firmware project.</li>
               <li>Generated builds run in unique temporary directories.</li>
               <li>MCP workers expose a fixed tool catalog and reject traversal.</li>
               <li>Model output cannot mark itself verified.</li>
               <li>Process isolation is application-level, not an operating-system sandbox.</li>
+              <li>Model keys are read from the environment or local .env; the selected provider receives the key and prompt.</li>
             </ul>
           </article>
 

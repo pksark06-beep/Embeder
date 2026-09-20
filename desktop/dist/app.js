@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 const $ = (id) => document.getElementById(id);
 const $$ = (selector, root = document) => [...root.querySelectorAll(selector)];
 const STAGES = ["intent", "ground", "compile", "simulate", "verified"];
@@ -56,7 +57,7 @@ const transport = {
     const response = await fetch(route.url, {
       method: route.method || "GET",
       body: route.body,
-      headers: { Accept: "application/json", ...(route.method ? { "Content-Type": "text/plain; charset=utf-8" } : {}) },
+      headers: { Accept: "application/json", ...(route.method ? { "Content-Type": "text/plain; charset=utf-8", "X-Embeder-Client": "1" } : {}) },
     });
     if (!response.ok) throw new Error(`${command} returned HTTP ${response.status}`);
     const data = await response.json();
@@ -214,7 +215,7 @@ function renderSidebar() {
   } else if (state.page === "guide") {
     $("sideContent").innerHTML = `<section class="side-section"><div class="side-section-title">Workflow</div><div class="side-stat"><span>1. Edit</span><b>Explorer</b></div><div class="side-stat"><span>2. Build</span><b>GCC</b></div><div class="side-stat"><span>3. Simulate</span><b>Renode</b></div></section><div class="side-note">The guide stays available from the question-mark icon whenever you need it.</div>`;
   } else {
-    $("sideContent").innerHTML = `<section class="side-section"><div class="side-section-title">Categories</div><div class="side-stat"><span>Toolchains</span><b>Local</b></div><div class="side-stat"><span>Security</span><b>Enforced</b></div><div class="side-stat"><span>Providers</span><b>Not configured</b></div></section>`;
+    $("sideContent").innerHTML = `<section class="side-section"><div class="side-section-title">Categories</div><div class="side-stat"><span>Toolchains</span><b>Local</b></div><div class="side-stat"><span>Security</span><b>Path checks</b></div><div class="side-stat"><span>Providers</span><b>Not configured</b></div></section>`;
   }
 
   $$('[data-open-file]', $("sideContent")).forEach((item) => item.addEventListener("click", () => openFile(item.dataset.openFile)));
@@ -392,7 +393,7 @@ function renderFileContext(file) {
       <div class="context-row"><span>Path</span><b>${escapeHtml(file.path)}</b></div>
       <div class="context-row"><span>Language</span><b>${escapeHtml(file.language)}</b></div>
       <div class="context-row"><span>Size</span><b>${escapeHtml(file.bytes)} bytes</b></div>
-      <div class="context-row"><span>Sandbox</span><b>Workspace jailed</b></div>
+      <div class="context-row"><span>File access</span><b>Workspace path checked</b></div>
     </section>
     <section class="context-group"><h3>Verification</h3><div class="evidence-item">Source changes are not trusted until the compiler and simulator oracles pass.<code>Core → MCP → toolchain</code></div></section>`;
 }
@@ -447,14 +448,14 @@ function renderRegisterContext(data) {
 
 async function loadMcp() {
   setMcpIndicator("checking", "MCP checking");
-  $("extensionGrid").innerHTML = '<div class="empty-state">Discovering isolated MCP workers…</div>';
+  $("extensionGrid").innerHTML = '<div class="empty-state">Discovering local MCP workers…</div>';
   try {
     state.mcp = await transport.call("mcp_status");
     renderMcp();
     const online = state.mcp.servers.filter((server) => server.status === "online").length;
     setMcpIndicator(online === state.mcp.servers.length ? "online" : "offline", `${online}/${state.mcp.servers.length} MCP online`);
     $("mcpMetric").textContent = `${online}/${state.mcp.servers.length} online`;
-    log("conMcp", `Discovered ${online} online MCP servers over isolated stdio`, online ? "ok" : "warn", "mcp");
+    log("conMcp", `Discovered ${online} online MCP servers over stdio`, online ? "ok" : "warn", "mcp");
     renderSidebar();
   } catch (error) {
     setMcpIndicator("offline", "MCP offline");
@@ -483,7 +484,7 @@ function renderMcp(filter = "") {
       <p>${escapeHtml(server.transport)} · ${escapeHtml(server.isolation)} · ${server.latency_ms} ms</p>
       <div class="extension-meta">${server.tools.map((tool) => `<span>${escapeHtml(tool.name)}</span>`).join("") || '<span>no tools</span>'}</div>
       <div class="extension-tools">${server.tools.map((tool) => `<div class="extension-tool"><code>${escapeHtml(tool.name)}</code><span>${escapeHtml(tool.description)}</span></div>`).join("")}</div>
-      <div class="extension-actions"><button data-probe-mcp="${escapeHtml(server.id)}">Run sandbox check</button><span class="dependency ${dependencyReady ? "" : "missing"}">${escapeHtml(server.dependency?.name || "runtime")}: ${dependencyReady ? "ready" : "missing"}</span></div>
+      <div class="extension-actions"><button data-probe-mcp="${escapeHtml(server.id)}">Check MCP response</button><span class="dependency ${dependencyReady ? "" : "missing"}">${escapeHtml(server.dependency?.name || "runtime")}: ${dependencyReady ? "ready" : "missing"}</span></div>
       </div></article>`;
   }).join("") || '<div class="empty-state">No extensions match this filter.</div>';
   $$('[data-probe-mcp]', $("extensionGrid")).forEach((button) => button.addEventListener("click", () => probeMcp(button.dataset.probeMcp, button)));
@@ -495,8 +496,8 @@ async function probeMcp(server, button) {
   button.textContent = "Checking…";
   try {
     const result = await transport.call("probe_mcp", { server });
-    log("conMcp", `${server}: sandbox check passed in ${result.latency_ms} ms (${result.tool_count} tools)`, "ok", "mcp");
-    showToast(`${server} MCP sandbox check passed`);
+    log("conMcp", `${server}: MCP response received in ${result.latency_ms} ms (${result.tool_count} tools)`, "ok", "mcp");
+    showToast(`${server} MCP check passed`);
     setConsole("mcp");
     togglePanel(true);
   } catch (error) {

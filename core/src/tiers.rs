@@ -1,3 +1,4 @@
+// SPDX-License-Identifier: MPL-2.0
 //! Confidence tiers and the verifiability boundary — the vocabulary of the whole
 //! system (SYSTEM_SPEC §2, §3). The Core is the sole authority for assigning these.
 
